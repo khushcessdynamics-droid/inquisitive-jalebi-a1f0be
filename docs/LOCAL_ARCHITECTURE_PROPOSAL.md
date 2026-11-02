@@ -1,3 +1,5 @@
+> **SUPERSEDED (2026-11-02):** replaced by the approved free-first online architecture (Supabase + Cloudflare). See `machining-tracker/README.md` and `machining-tracker/docs/`. Kept for history.
+
 # CESS Machining Job Tracker — Revised Local Architecture (personal use, ₹0 running cost)
 
 Status: **AWAITING YOUR APPROVAL. No application code written. No service purchased or activated.**

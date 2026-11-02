@@ -1,0 +1,118 @@
+import { Suspense, lazy, type ReactNode } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import type { PermissionKey } from "@cess/shared";
+import { useAuth } from "./auth/AuthProvider";
+import { Layout } from "./components/Layout";
+import { Alert, Button, Spinner } from "./components/ui";
+import { AuthShell } from "./pages/auth/AuthShell";
+import { LoginPage } from "./pages/auth/LoginPage";
+import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
+import { AuthConfirmPage } from "./pages/auth/AuthConfirmPage";
+import { SetPasswordPage } from "./pages/auth/SetPasswordPage";
+import { MfaPage } from "./pages/auth/MfaPage";
+import { HomePage } from "./pages/HomePage";
+import { AccountPage } from "./pages/AccountPage";
+// Admin pages are loaded on demand so ordinary users download less.
+const UsersPage = lazy(() => import("./pages/admin/UsersPage").then((m) => ({ default: m.UsersPage })));
+const PermissionsPage = lazy(() => import("./pages/admin/PermissionsPage").then((m) => ({ default: m.PermissionsPage })));
+const SettingsPage = lazy(() => import("./pages/admin/SettingsPage").then((m) => ({ default: m.SettingsPage })));
+const ActivityPage = lazy(() => import("./pages/admin/ActivityPage").then((m) => ({ default: m.ActivityPage })));
+const SystemHealthPage = lazy(() => import("./pages/admin/SystemHealthPage").then((m) => ({ default: m.SystemHealthPage })));
+
+function RequireSession({ children }: { children: ReactNode }) {
+  const { session, sessionLoading } = useAuth();
+  const location = useLocation();
+  if (sessionLoading) return <Spinner />;
+  if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  return <>{children}</>;
+}
+
+function RequireAccess({ children }: { children: ReactNode }) {
+  const { session, sessionLoading, access, accessLoading, accessError, signOut, refreshAccess } = useAuth();
+  const location = useLocation();
+  if (sessionLoading) return <FullPageSpinner />;
+  if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  if (accessLoading || !access) {
+    if (accessError) {
+      return (
+        <AuthShell title="Cannot load your account">
+          <Alert tone="error">{accessError.message}</Alert>
+          <div className="flex gap-2">
+            <Button onClick={() => void refreshAccess()}>Try again</Button>
+            <Button variant="secondary" onClick={() => void signOut()}>
+              Sign out
+            </Button>
+          </div>
+        </AuthShell>
+      );
+    }
+    return <FullPageSpinner />;
+  }
+  switch (access.status) {
+    case "ok":
+      return <>{children}</>;
+    case "mfa_required":
+      return <Navigate to="/mfa" replace />;
+    case "session_expired":
+      return <FullPageSpinner />;
+    default:
+      return (
+        <AuthShell title="Account not active">
+          <Alert tone="warning">
+            {access.status === "inactive"
+              ? "Your account is deactivated or not yet activated. Contact your Admin."
+              : "Your account has no profile. Contact your Admin."}
+          </Alert>
+          <Button variant="secondary" onClick={() => void signOut()}>
+            Sign out
+          </Button>
+        </AuthShell>
+      );
+  }
+}
+
+function RequirePermission({ anyOf, children }: { anyOf: PermissionKey[]; children: ReactNode }) {
+  const { can } = useAuth();
+  if (!anyOf.some((p) => can(p))) {
+    return <Alert tone="warning" title="No access">You do not have permission to open this page. Ask your Admin if you need it.</Alert>;
+  }
+  return <Suspense fallback={<Spinner />}>{children}</Suspense>;
+}
+
+function FullPageSpinner() {
+  return (
+    <div className="flex h-full items-center justify-center">
+      <Spinner />
+    </div>
+  );
+}
+
+export function App() {
+  const { configError } = useAuth();
+  if (configError) {
+    return (
+      <AuthShell title="Configuration needed">
+        <Alert tone="error">{configError}</Alert>
+      </AuthShell>
+    );
+  }
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/auth/confirm" element={<AuthConfirmPage />} />
+      <Route path="/set-password" element={<RequireSession><SetPasswordPage /></RequireSession>} />
+      <Route path="/mfa" element={<RequireSession><MfaPage /></RequireSession>} />
+      <Route element={<RequireAccess><Layout /></RequireAccess>}>
+        <Route index element={<HomePage />} />
+        <Route path="account" element={<AccountPage />} />
+        <Route path="admin/users" element={<RequirePermission anyOf={["users.manage"]}><UsersPage /></RequirePermission>} />
+        <Route path="admin/permissions" element={<RequirePermission anyOf={["users.manage"]}><PermissionsPage /></RequirePermission>} />
+        <Route path="settings" element={<RequirePermission anyOf={["settings.change", "users.manage"]}><SettingsPage /></RequirePermission>} />
+        <Route path="activity" element={<RequirePermission anyOf={["activity.view"]}><ActivityPage /></RequirePermission>} />
+        <Route path="system" element={<RequirePermission anyOf={["system.view"]}><SystemHealthPage /></RequirePermission>} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}

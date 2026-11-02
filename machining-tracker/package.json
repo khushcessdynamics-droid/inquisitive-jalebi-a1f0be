@@ -1,0 +1,38 @@
+{
+  "name": "cess-machining-tracker",
+  "private": true,
+  "version": "0.1.0",
+  "description": "CESS Machining Job Tracker - React + Supabase (free-tier first)",
+  "workspaces": [
+    "packages/shared",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "db:start": "supabase start -x studio,imgproxy,vector,logflare,supavisor,postgres-meta",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:status": "supabase status",
+    "dev": "npm run dev -w apps/web",
+    "build": "npm run build -w packages/shared && npm run build -w apps/web",
+    "typecheck": "npm run typecheck -w packages/shared && npm run typecheck -w apps/web && tsc -p tests/tsconfig.json --noEmit",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "supabase db reset && vitest run --project integration",
+    "test": "vitest run --project unit && npm run test:integration",
+    "test:e2e": "supabase db reset && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@supabase/supabase-js": "2.118.0",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "26.6.6",
+    "@types/pg": "^8.23.1",
+    "jsdom": "30.1.3",
+    "pg": "^8.23.1",
+    "supabase": "2.122.0",
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
+  }
+}
