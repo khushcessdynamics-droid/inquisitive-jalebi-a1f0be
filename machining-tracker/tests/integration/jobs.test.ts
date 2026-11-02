@@ -31,10 +31,10 @@ async function user(email: string, role: "admin" | "manager" | "staff", name: st
   return { client, id };
 }
 
-async function ok<T>(p: PromiseLike<{ data: T; error: { message: string; code?: string } | null }>): Promise<T> {
+async function ok<T>(p: PromiseLike<{ data: T; error: { message: string; code?: string } | null }>): Promise<NonNullable<T>> {
   const { data, error } = await p;
   if (error) throw new Error(`${error.code}: ${error.message}`);
-  return data;
+  return data as NonNullable<T>;
 }
 
 async function register(client: SupabaseClient, jobId: string) {
