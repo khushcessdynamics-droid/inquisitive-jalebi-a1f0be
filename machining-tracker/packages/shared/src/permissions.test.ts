@@ -2,7 +2,13 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { ADMIN_ONLY_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS, PERMISSION_KEYS } from "./permissions";
 
-const migration = readFileSync(new URL("../../../supabase/migrations/20261102000100_foundation.sql", import.meta.url), "utf8");
+import { readdirSync } from "node:fs";
+const dir = new URL("../../../supabase/migrations/", import.meta.url);
+const migration = readdirSync(dir)
+  .filter((f) => f.endsWith(".sql"))
+  .sort()
+  .map((f) => readFileSync(new URL(f, dir), "utf8"))
+  .join("\n");
 
 describe("permission catalogue matches the database migration", () => {
   it("every key is seeded and nothing extra exists", () => {

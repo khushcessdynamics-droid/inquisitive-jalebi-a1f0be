@@ -32,6 +32,7 @@ export const PERMISSION_KEYS = [
   "reports.export",
   "activity.view",
   "settings.change",
+  "data.import",
   "system.view",
   "users.manage",
   "backups.manage",
