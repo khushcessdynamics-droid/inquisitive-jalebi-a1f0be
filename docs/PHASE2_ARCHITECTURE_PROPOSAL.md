@@ -1,3 +1,5 @@
+> **SUPERSEDED (2026-11-02):** cloud/multi-user plan replaced by `LOCAL_ARCHITECTURE_PROPOSAL.md` (personal use, local, ₹0 running cost). Kept for history; business rules and formulas here still apply where not overridden.
+
 # CESS Machining Job Tracker — Architecture Proposal (for approval)
 
 Status: **PROPOSAL. No application code written. No paid service activated.**

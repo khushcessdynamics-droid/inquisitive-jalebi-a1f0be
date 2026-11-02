@@ -1,3 +1,5 @@
+> **SUPERSEDED (2026-11-02):** cloud/multi-user plan replaced by `LOCAL_ARCHITECTURE_PROPOSAL.md` (personal use, local, ₹0 running cost). Kept for history; business rules and formulas here still apply where not overridden.
+
 # CESS Machining Job Tracker — Final Approval Package (before Phase 3 code)
 
 Status: **AWAITING YOUR APPROVAL. No application code written. No paid service purchased, activated or subscribed.**
