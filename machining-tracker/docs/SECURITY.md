@@ -86,4 +86,4 @@ Job visibility for Staff uses the separate **Assigned Staff User** field (kept a
 1. No per-account lockout (needs Team plan); per-IP rate limit + CAPTCHA + MFA instead.
 2. No leaked-password check (Pro).
 3. Failed password attempts are not visible in the app (Supabase does not store them in the audit table).
-4. No automatic backups (Phase 3B adds the local verified backup tool before any real data is entered).
+4. No automatic backups from Supabase on Free: the local encrypted, verified backup tool covers this (`docs/BACKUP_AND_RECOVERY.md`). Backups contain password hashes and MFA secrets, so the backup key must be protected.

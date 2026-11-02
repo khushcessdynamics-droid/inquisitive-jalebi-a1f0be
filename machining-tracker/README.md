@@ -4,7 +4,7 @@ Online, multi-user application for outsourced machining jobs and vendor manageme
 Free-first stack: **React + TypeScript + Vite + Tailwind** (static site on Cloudflare) and **Supabase Free**
 (PostgreSQL, Auth with MFA, Storage, Realtime, Edge Functions). Mandatory running cost: **₹0**.
 
-> Status: **Phase 3 (foundation) complete and tested locally. Not deployed yet.** See `docs/PHASE3_REPORT.md`.
+> Status: **Phase 3 (foundation) and Phase 3B (verified backups) complete and tested locally. Not deployed yet.** See `docs/PHASE3_REPORT.md`.
 
 ## What works today
 - Invitation-only accounts, sign-in, sign-out, sign out on all devices
@@ -17,6 +17,8 @@ Free-first stack: **React + TypeScript + Vite + Tailwind** (static site on Cloud
 - Append-only Activity History with before/after values and reasons; Supabase sign-in events
 - System Health: database and storage usage against free-plan limits, backup status, row counts
 - Responsive layout (desktop, tablet, phone); live refresh of shared settings (Realtime)
+- **Encrypted, verified backups** on your Windows PC (daily via Task Scheduler), with tested restore and disaster recovery
+  (`docs/BACKUP_AND_RECOVERY.md`, double-click scripts in `scripts/windows/`)
 
 Jobs, vendors, commitments, reliability score, quotations, returns, quality, payments, WhatsApp, reminders,
 reports and Excel import/export follow in Phases 4-8 (see `docs/PHASE3_REPORT.md`).
@@ -31,6 +33,8 @@ machining-tracker/
 │  ├─ functions/admin-users/ Edge Function for invitations and reset links (no third-party imports)
 │  ├─ templates/             Email templates (token_hash links)
 │  └─ config.toml            LOCAL development stack settings
+├─ tools/backup/             Backup / verify / restore tool (Node 22, runs the TypeScript directly)
+├─ scripts/windows/          Double-click .cmd files: backup setup, backup now, schedule, list, verify, restore
 ├─ tests/
 │  ├─ integration/           Security tests against a real local Supabase stack
 │  ├─ e2e/                   Playwright browser tests (desktop + phone)
@@ -76,6 +80,10 @@ The integration and e2e commands **reset the local database** first; they refuse
 
 ## Deployment
 Not done yet. Accounts, credentials and exact steps: `docs/SETUP_ACCOUNTS.md`. Nothing is created or paid for without your approval.
+
+## Backups
+Supabase Free has no backups, so `tools/backup` makes them on your PC: encrypted, test-restored before being marked verified, kept by
+safe retention rules, optionally copied to a USB drive. Setup and restore steps: `docs/BACKUP_AND_RECOVERY.md`.
 
 ## Security
 See `docs/SECURITY.md`. Never put the secret/service key or database password in the website, Cloudflare or Git.

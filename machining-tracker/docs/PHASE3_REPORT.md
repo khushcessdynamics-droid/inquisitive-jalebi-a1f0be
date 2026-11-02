@@ -26,15 +26,25 @@ Screenshots of the running app: `docs/screenshots/`.
 
 Example 10 from your test list ("Staff must not access Admin-only settings or unauthorized payment operations; backend must reject direct API calls") is covered by the integration tests. Payment operations themselves arrive in Phase 6.
 
+## Phase 3B: verified backups (added 2026-11-02)
+| Item | Result |
+|---|---|
+| Backup tool `tools/backup` | Consistent snapshot of all app tables, user accounts (incl. MFA) and attachments; AES-256-GCM encrypted; needs only Node.js 22 (no PostgreSQL install) |
+| Verification | Test restore into an in-process PostgreSQL (PGlite): counts, keys, relationships, byte-identical re-export, business checks, file checksums |
+| Restore | Typed confirmation, re-verification, automatic safety backup, structure-version check, single transaction with checks before commit, activity history never rolled back, attachments re-uploaded |
+| Retention | Daily/weekly/monthly; never deletes the newest verified backup or goes below 3 verified backups; files never overwritten |
+| Windows | Double-click scripts and a Task Scheduler task that runs missed backups at next start-up (`scripts/windows`) |
+| Monitoring | Each run recorded in `backup_runs`; shown on System Health |
+| Tests | 14 unit tests (encryption, tampering, wrong key, no-overwrite, retention, config) + 6 integration tests incl. **full disaster recovery** (database wiped, everything restored, Admin signs in with original password and MFA) |
+
 ## Not done yet / honest limitations
-1. **Backups (Phase 3B, next):** Supabase Free has no backups. The local Windows backup tool (scheduled export, attachments, verification by test-restore, restore with confirmation, never deleting the only good backup) must be finished **before any real data is entered**. It needs PostgreSQL client tools (free) on your PC.
+1. **Backups on your PC:** the hosted-database connection (session pooler + certificate) and the Windows scheduled task can only be confirmed once your Supabase project exists and on your PC.
 2. **Not deployed.** Deployment needs your Supabase and Cloudflare accounts (`docs/SETUP_ACCOUNTS.md`). I will not call it live until it is tested over its public HTTPS address.
 3. Windows-specific behaviour (backup scheduling) can only be fully verified on your PC.
 4. Free-plan limits: no per-account lockout, no leaked-password check, short provider logs (see `docs/SECURITY.md`).
 5. Passwords are hashed by Supabase Auth with bcrypt, not Argon2id (not configurable in Supabase).
 
 ## Next phases
-- **3B** Local verified backup & restore tool (Windows), backup history in System Health.
 - **4** Jobs (combined Part No / Part Name, Given By / Created By / Assigned Staff User), Jobs Register, vendors, cancellation & reassignment history, attachments, Excel import/export.
 - **5** Commitment history, six-factor reliability score, cost comparison.
 - **6** Material returns, quality inspection, payments.

@@ -81,3 +81,22 @@ export async function access(client: SupabaseClient): Promise<Record<string, unk
   if (error) throw error;
   return data as Record<string, unknown>;
 }
+
+/** Recreates the LOCAL database from the migrations (deletes all local data) and waits until the API answers again. */
+export async function resetLocalDatabase(): Promise<void> {
+  const { execSync } = await import("node:child_process");
+  await closeSql();
+  execSync("npx supabase db reset", { stdio: "ignore", timeout: 240_000 });
+  const env = localEnv();
+  for (let i = 0; i < 90; i++) {
+    try {
+      const auth = await fetch(`${env.apiUrl}/auth/v1/health`, { headers: { apikey: env.publishableKey } });
+      const rest = await fetch(`${env.apiUrl}/rest/v1/rpc/my_access`, { method: "POST", headers: { apikey: env.publishableKey, "Content-Type": "application/json" }, body: "{}" });
+      if (auth.ok && rest.status < 500) return;
+    } catch {
+      /* not ready yet */
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  throw new Error("Local Supabase did not come back after db reset");
+}

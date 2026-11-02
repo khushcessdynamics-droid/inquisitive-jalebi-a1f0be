@@ -12,6 +12,7 @@ import {
   closeSql,
   createAuthUser,
   enrollAndVerifyMfa,
+  resetLocalDatabase,
   serviceClient,
   signIn,
   sql,
@@ -62,8 +63,7 @@ let staffId: string;
 
 beforeAll(async () => {
   // Fresh database state is required for the first-Admin bootstrap test.
-  const admins = await sql<{ n: number }>("select count(*)::int as n from public.profiles where role_key = 'admin' and is_active");
-  if (admins[0]!.n > 0) throw new Error("Run `npx supabase db reset` before the integration tests (an Admin already exists).");
+  await resetLocalDatabase();
 });
 
 afterAll(async () => {
