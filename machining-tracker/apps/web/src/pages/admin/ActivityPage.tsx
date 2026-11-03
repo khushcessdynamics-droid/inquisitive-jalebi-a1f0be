@@ -6,7 +6,7 @@ import { useAuth } from "../../auth/AuthProvider";
 import { supabase } from "../../lib/supabase";
 import { toAppError, unwrap } from "../../lib/errors";
 import type { ActivityRow } from "../../lib/types";
-import { actionLabel as label } from "../../lib/activity";
+import { actionLabel as label, actorLabel } from "../../lib/activity";
 import { useDateFormat, useRealtimeInvalidate } from "../../hooks/data";
 import { Alert, Badge, Button, Card, EmptyState, Field, Input, PageHeader, Select, Spinner, Table, cx, td, th } from "../../components/ui";
 
@@ -116,6 +116,8 @@ function History() {
               <option value="vendors">Vendors</option>
               <option value="quotations">Cost comparison</option>
               <option value="payments">Payments</option>
+              <option value="communication">WhatsApp</option>
+              <option value="reminders">Reminders</option>
               <option value="attachments">Attachments</option>
               <option value="import">Excel import</option>
             </Select>
@@ -160,7 +162,7 @@ function History() {
                       <td className={td}>{open === r.id ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</td>
                       <td className={`${td} whitespace-nowrap text-xs`}>{formatDateTimeIST(r.occurred_at, dateFormat)}</td>
                       <td className={td}>
-                        {r.actor_name ?? <span className="text-slate-500">{r.source === "sql" ? "Database owner (SQL)" : r.source === "service" ? "Server process" : "System"}</span>}
+                        {r.actor_name ?? <span className="text-slate-500">{actorLabel(r)}</span>}
                         {r.actor_role && <span className="ml-1 text-xs text-slate-400">({r.actor_role})</span>}
                       </td>
                       <td className={td}>

@@ -5,3 +5,4 @@ export * from "./password";
 export * from "./excelImport";
 export * from "./format";
 export * from "./commitments";
+export * from "./whatsapp";

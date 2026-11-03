@@ -7,8 +7,12 @@ import {
   DATE_FORMATS,
   RELIABILITY_FACTORS,
   RELIABILITY_FACTOR_LABELS,
+  TEMPLATE_PLACEHOLDERS,
   formatDate,
+  renderTemplate,
+  reminderSchedule,
   settingsSchemas,
+  templateValues,
   sumWeights,
   todayIST,
   type SettingKey,
@@ -20,7 +24,7 @@ import type { CancelReasonRow, MasterRow, SettingRow } from "../../lib/types";
 import { useRealtimeInvalidate, useSettings } from "../../hooks/data";
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner, Table, cx, td, th } from "../../components/ui";
 
-type Tab = "company" | "localization" | "categories" | "given_by" | "cancel" | "reliability" | "cost" | "jobs" | "security";
+type Tab = "company" | "localization" | "categories" | "given_by" | "cancel" | "reliability" | "cost" | "jobs" | "reminders" | "whatsapp" | "security";
 
 export function SettingsPage() {
   const { can } = useAuth();
@@ -33,6 +37,8 @@ export function SettingsPage() {
     { key: "reliability", label: "Reliability score", show: can("settings.change") },
     { key: "cost", label: "Cost comparison", show: can("settings.change") },
     { key: "jobs", label: "Job thresholds", show: can("settings.change") },
+    { key: "reminders", label: "Reminders", show: can("settings.change") },
+    { key: "whatsapp", label: "WhatsApp", show: can("settings.change") },
     { key: "security", label: "Session security", show: can("users.manage") },
   ];
   const visible = tabs.filter((t) => t.show);
@@ -73,6 +79,8 @@ export function SettingsPage() {
           {tab === "reliability" && <ReliabilityForm row={settings.data!.reliability!} />}
           {tab === "cost" && <CostComparisonForm row={settings.data!.cost_comparison!} />}
           {tab === "jobs" && <JobsForm row={settings.data!.jobs!} />}
+          {tab === "reminders" && <RemindersForm row={settings.data!.reminders!} />}
+          {tab === "whatsapp" && <WhatsAppSettings row={settings.data!.whatsapp!} />}
           {tab === "security" && <SecurityForm row={settings.data!.security!} />}
         </>
       )}
@@ -319,6 +327,198 @@ function CostComparisonForm({ row }: { row: SettingRow }) {
       </div>
       <SaveBar s={s} />
     </Card>
+  );
+}
+
+type Reminders = {
+  enabled: boolean;
+  days_before: number[];
+  on_due_date: boolean;
+  overdue_after_days: number;
+  repeat_daily_when_overdue: boolean;
+  run_time_ist: string;
+  whatsapp_auto: false;
+};
+
+function RemindersForm({ row }: { row: SettingRow }) {
+  const s = useSettingDraft<Reminders>("reminders", row);
+  const [daysText, setDaysText] = useState(s.draft.days_before.join(", "));
+  useEffect(() => setDaysText((row.value as Reminders).days_before.join(", ")), [row.version, row.value]);
+  const today = todayIST();
+  const due = (() => {
+    const d = new Date(`${today}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 5);
+    return d.toISOString().slice(0, 10);
+  })();
+  const preview = reminderSchedule(due, s.draft, today, 9);
+  const check = (k: "enabled" | "on_due_date" | "repeat_daily_when_overdue") => (
+    <input type="checkbox" checked={s.draft[k]} onChange={(e) => s.setDraft({ ...s.draft, [k]: e.target.checked })} />
+  );
+  return (
+    <Card title="Reminder schedule">
+      <p className="mb-4 text-sm text-slate-600">
+        The server creates reminders every day at the time below (Indian time), also when nobody has the app open. Jobs without a committed date get none; reminders stop
+        when nothing is left with the vendor, or the job is completed or cancelled. They follow the latest committed date, so a revision moves them automatically.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-800">{check("enabled")} Reminders switched on</label>
+        <Field label="Run daily at (IST)" htmlFor="rm-time">
+          <Input id="rm-time" type="time" value={s.draft.run_time_ist} onChange={(e) => s.setDraft({ ...s.draft, run_time_ist: e.target.value })} />
+        </Field>
+        <Field label="Days before the committed date" htmlFor="rm-before" hint="Comma-separated, e.g. 3, 1 (up to 5 values)">
+          <Input
+            id="rm-before"
+            value={daysText}
+            onChange={(e) => {
+              setDaysText(e.target.value);
+              const nums = e.target.value
+                .split(",")
+                .map((x) => x.trim())
+                .filter(Boolean)
+                .map(Number);
+              s.setDraft({ ...s.draft, days_before: nums });
+            }}
+          />
+        </Field>
+        <label className="flex items-center gap-2 text-sm text-slate-800">{check("on_due_date")} Remind on the committed date</label>
+        <Field label="First overdue reminder after (days)" htmlFor="rm-od">
+          <Input id="rm-od" type="number" min={1} max={30} value={s.draft.overdue_after_days} onChange={(e) => s.setDraft({ ...s.draft, overdue_after_days: Number(e.target.value) })} />
+        </Field>
+        <label className="flex items-center gap-2 text-sm text-slate-800">{check("repeat_daily_when_overdue")} Then remind every day until the job is completed or cancelled</label>
+        <label className="flex items-start gap-2 text-sm text-slate-500 sm:col-span-2">
+          <input type="checkbox" checked={false} disabled className="mt-1" />
+          <span>
+            Send WhatsApp reminders automatically: needs the WhatsApp Business Cloud API (Meta account, approved templates, vendor consent), which is not configured. Until then,
+            reminders appear in Notifications with a one-click WhatsApp button and you press Send.
+          </span>
+        </label>
+      </div>
+      <div className="mt-4 rounded-md bg-slate-50 p-3 text-sm">
+        <p className="font-medium text-slate-800">Preview: a job committed for {formatDate(due)}</p>
+        {preview.length ? (
+          <p className="mt-1 text-slate-700">{preview.map((p) => `${formatDate(p.date)} (${p.kind === "upcoming" ? "due soon" : p.kind === "due_today" ? "due today" : "overdue"})`).join(" · ")}</p>
+        ) : (
+          <p className="mt-1 text-slate-500">No reminders with these settings.</p>
+        )}
+      </div>
+      <SaveBar s={s} />
+    </Card>
+  );
+}
+
+function WhatsAppSettings({ row }: { row: SettingRow }) {
+  const s = useSettingDraft<{ default_country_code: string; mode: "click_to_chat" }>("whatsapp", row);
+  const templates = useQuery({
+    queryKey: ["message-templates"],
+    queryFn: async () => unwrap(await supabase.from("message_templates").select("*").order("sort_order")) as Array<{ key: string; label: string; body: string; is_active: boolean; version: number }>,
+  });
+  return (
+    <div className="space-y-4">
+      <Card title="WhatsApp">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Default country code for vendor numbers" htmlFor="wa-cc">
+            <Input id="wa-cc" value={s.draft.default_country_code} maxLength={5} onChange={(e) => s.setDraft({ ...s.draft, default_country_code: e.target.value.trim() })} />
+          </Field>
+          <Field label="Mode">
+            <Input value="Click-to-chat (WhatsApp opens; you press Send)" disabled />
+          </Field>
+        </div>
+        <p className="mt-3 text-xs text-slate-500">
+          Automatic sending (WhatsApp Business Cloud API) needs a Meta Business account, a verified business phone number, approved message templates and the vendors' consent.
+          It stays off until those are provided; the steps are in docs/SETUP_ACCOUNTS.md.
+        </p>
+        <SaveBar s={s} />
+      </Card>
+      <Card title="Message templates">
+        <p className="mb-3 text-sm text-slate-600">
+          Placeholders in curly brackets are filled from the job. A fact that is not recorded shows as [missing: ...] so nothing is invented. Every change is kept in the Activity History.
+        </p>
+        <details className="mb-3 text-sm">
+          <summary className="cursor-pointer font-medium text-slate-800">Available placeholders</summary>
+          <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+            {Object.entries(TEMPLATE_PLACEHOLDERS).map(([k, v]) => (
+              <li key={k} className="text-xs text-slate-600">
+                <code className="rounded bg-slate-100 px-1 text-slate-800">{`{${k}}`}</code> {v}
+              </li>
+            ))}
+          </ul>
+        </details>
+        {templates.isLoading ? <Spinner /> : templates.error ? <Alert tone="error">{toAppError(templates.error).message}</Alert> : (
+          <div className="space-y-3">
+            {templates.data!.map((t) => (
+              <TemplateEditor key={`${t.key}-${t.version}`} t={t} onSaved={() => void templates.refetch()} />
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+const SAMPLE = {
+  vendor_name: "Shree Engineering", contact_person: "Mr. Patil", company: "CESS", job_no: "JOB-2627-0007", part: "4711 / Drive Shaft", qty: 100,
+  date_given: "2026-11-01", original_commitment: "2026-11-05", current_commitment: "2026-11-08", delay_days: 2, delay_days_original: 5,
+  pending_qty: 40, returned_qty: 60, accepted_qty: 55, rejected_qty: 5, rework_qty: 0,
+  payment: { amount: 15000, paid_on: "2026-11-03", mode: "upi", reference: "UTR 1234", balance: 15000 },
+};
+
+function TemplateEditor({ t, onSaved }: { t: { key: string; label: string; body: string; is_active: boolean; version: number }; onSaved: () => void }) {
+  const [body, setBody] = useState(t.body);
+  const [active, setActive] = useState(t.is_active);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ tone: "success" | "error" | "warning"; text: string } | null>(null);
+  const preview = renderTemplate(body, templateValues(SAMPLE, "dd-MMM-yyyy"));
+  const dirty = body !== t.body || active !== t.is_active;
+  return (
+    <div className="rounded-md border border-slate-200 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-slate-900">{t.label}</p>
+        <label className="flex items-center gap-2 text-xs text-slate-700">
+          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> In use
+        </label>
+      </div>
+      <div className="mt-2 grid gap-3 lg:grid-cols-2">
+        <Field label="Text" htmlFor={`tpl-${t.key}`}>
+          <textarea
+            id={`tpl-${t.key}`}
+            rows={5}
+            maxLength={2000}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-1 focus:ring-brand-600"
+          />
+        </Field>
+        <div>
+          <p className="text-sm font-medium text-slate-700">Preview (sample job)</p>
+          <p className="mt-1 whitespace-pre-line rounded-md bg-emerald-50 px-3 py-2 text-sm text-slate-800">{preview.text}</p>
+          {preview.unknown.length > 0 && <p className="mt-1 text-xs text-red-700">Unknown placeholders: {preview.unknown.map((u) => `{${u}}`).join(", ")}</p>}
+        </div>
+      </div>
+      {msg && <div className="mt-2"><Alert tone={msg.tone}>{msg.text}</Alert></div>}
+      {dirty && (
+        <Button
+          className="mt-2"
+          loading={busy}
+          disabled={body.trim().length < 10 || preview.unknown.length > 0}
+          onClick={async () => {
+            setBusy(true);
+            setMsg(null);
+            try {
+              const data = unwrap(await supabase.from("message_templates").update({ body, is_active: active }).eq("key", t.key).eq("version", t.version).select("key")) as unknown[];
+              if (!data.length) throw new AppError("This template was changed by someone else or you may not change templates. Reload and try again.", "conflict");
+              setMsg({ tone: "success", text: "Saved." });
+              onSaved();
+            } catch (e) {
+              setMsg({ tone: "error", text: toAppError(e).message });
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          Save template
+        </Button>
+      )}
+    </div>
   );
 }
 

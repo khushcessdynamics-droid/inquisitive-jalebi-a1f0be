@@ -14,6 +14,7 @@ import { VendorDialog } from "./VendorsPage";
 import { CancellationList, MeasureGrid, ReliabilityDetail, ScoreCell, plural, useReliability } from "../../components/reliability";
 import type { CommitmentRevisionRow, ReliabilityRow } from "../../lib/phase5Types";
 import { StatementDialog } from "../../components/vendorStatement";
+import { WhatsAppHistory } from "../../components/whatsapp";
 
 interface Summary {
   assignments: number;
@@ -300,6 +301,11 @@ export function VendorDetailPage() {
           </Table>
         )}
       </Card>
+      {can("whatsapp.send") && (
+        <Card className="mt-4" title="WhatsApp with this vendor">
+          <WhatsAppHistory vendorId={id} dateFormat={dateFormat} limit={30} />
+        </Card>
+      )}
       {detail && (
         <ReliabilityDetail
           vendorId={id}

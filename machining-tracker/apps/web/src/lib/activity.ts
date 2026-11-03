@@ -48,6 +48,9 @@ export const ACTION_LABELS: Record<string, string> = {
   "job.vendor_work_reopened": "Vendor assignment reopened",
   "job.reopened": "Job reopened",
   "payment.invoice_recorded": "Vendor invoice recorded",
+  "whatsapp.initiated": "WhatsApp opened with a message",
+  "whatsapp.confirmed_sent": "WhatsApp message marked as sent by user",
+  "reminder.generated": "Reminder generated",
   "payment.advance_added": "Advance paid",
   "payment.added": "Payment recorded",
   "payment.charge_added": "Additional charge added",
@@ -73,6 +76,13 @@ export const ACTION_LABELS: Record<string, string> = {
   "data.exported": "Data exported to Excel",
   "system.restored": "Data restored from backup",
 };
+
+/** Who did it, for history lists. Entries made by the scheduler have no user. */
+export function actorLabel(e: { actor_name: string | null; source: string; action: string }): string {
+  if (e.actor_name) return e.actor_name;
+  if (e.action.startsWith("reminder.")) return "Reminder engine (automatic)";
+  return e.source === "sql" ? "Database owner (SQL)" : e.source === "service" ? "Server process" : "System";
+}
 
 export function actionLabel(action: string): string {
   if (ACTION_LABELS[action]) return ACTION_LABELS[action];

@@ -84,3 +84,21 @@ The free `*.pages.dev` / `*.workers.dev` address includes HTTPS. A custom domain
 ## 5. Optional email (later, free options)
 
 The app is provider-independent: invitations and resets work by copied link today. To send emails automatically, add custom SMTP in Supabase → Authentication → SMTP settings. Free tiers (check current limits first): Brevo, Resend, or Gmail/Google Workspace SMTP with an app password. No code change is needed.
+
+## 6. Optional: automatic WhatsApp (WhatsApp Business Cloud API) — not needed for click-to-chat
+
+Click-to-chat works today with no account. Automatic sending is a separate, optional step and is **not built until you ask for it**:
+1. A Meta Business account (business.facebook.com) and a WhatsApp Business Platform app (developers.facebook.com).
+2. A phone number for the business that is **not** used in the normal WhatsApp app, verified with Meta.
+3. Message templates approved by Meta (the ten app templates would be submitted for approval; reminders outside a 24-hour chat window
+   must use approved templates).
+4. Each vendor's consent (opt-in) to receive WhatsApp messages from CESS.
+5. Information needed from you: the phone number ID, the WhatsApp Business account ID and a **permanent access token**, entered only as
+   Supabase Edge Function secrets (never in the website or in Git), plus a webhook verify token you choose.
+6. Cost: Meta charges per conversation/message category by country; check Meta's current WhatsApp pricing for India before approving.
+   Nothing is activated without your approval.
+
+## 7. Reminder scheduler (included in the migrations)
+The migrations enable `pg_cron` ("Supabase Cron") and create the job `cess-reminders`. After deploying, check in Supabase →
+Integrations → Cron that the job exists and runs. If the extension cannot be created by the migration on your project, enable
+"Cron" under Integrations once and run the migrations again.

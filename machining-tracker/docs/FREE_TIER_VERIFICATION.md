@@ -34,6 +34,7 @@ All values were read on the providers' official pages on 2026-11-02. Providers c
 | Realtime | 200 concurrent connections, 2 M messages/month; DELETE events are not RLS-filtered | P, D/realtime/limits, D/realtime/postgres-changes |
 | Edge Functions | 500,000 invocations/month, 100 functions, 2 s CPU, 150 s wall clock | P, D/functions/limits |
 | Logs | API/DB logs 1 day; auth logs 1 hour | P |
+| Cron (pg_cron, "Supabase Cron") | Supported on hosted projects; not listed as a paid feature (checked 2026-11-03). Scheduled jobs do not run while a Free project is paused | supabase.com/modules/cron, D/guides/cron/install, D/platform/project-pausing |
 | Usage alerts | Email when the quota is exceeded (no "approaching quota" alert found) | D/platform/billing-faq |
 
 ## Cloudflare Free

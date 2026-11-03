@@ -4,7 +4,7 @@ Online, multi-user application for outsourced machining jobs and vendor manageme
 Free-first stack: **React + TypeScript + Vite + Tailwind** (static site on Cloudflare) and **Supabase Free**
 (PostgreSQL, Auth with MFA, Storage, Realtime, Edge Functions). Mandatory running cost: **₹0**.
 
-> Status: **Phases 3 to 6 complete and tested locally. Not deployed yet.** See `docs/PHASE3_REPORT.md` to `docs/PHASE6_REPORT.md`.
+> Status: **Phases 3 to 7 complete and tested locally. Not deployed yet.** See `docs/PHASE3_REPORT.md` to `docs/PHASE7_REPORT.md`.
 
 ## What works today
 - Invitation-only accounts, sign-in, sign-out, sign out on all devices
@@ -38,7 +38,13 @@ Free-first stack: **React + TypeScript + Vite + Tailwind** (static site on Cloud
   reversals instead of edits; pending payments, vendor-wise totals, payment statements, monthly and FY payments
   (`docs/RETURNS_AND_PAYMENTS.md`). Admin records payments; Managers view
 
-WhatsApp and reminders (Phase 7), dashboard and weekly reports (Phase 8) follow.
+- **WhatsApp click-to-chat**: ten editable templates filled from the job, edit before sending, WhatsApp opens and you press Send;
+  communication history (recorded as opened, never claimed as sent), duplicate warning
+- **Reminder engine** on the server (pg_cron, Indian time): 3 and 1 day before, on the day, overdue daily; no duplicates; follows the
+  latest committed date; stops when completed or cancelled. **Notification center** with live unread count
+  (`docs/WHATSAPP_AND_REMINDERS.md`)
+
+Dashboard and weekly reports (Phase 8) follow.
 
 ## Folder structure
 ```

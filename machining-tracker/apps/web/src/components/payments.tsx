@@ -1,12 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileText, IndianRupee, PlusCircle } from "lucide-react";
+import { FileText, IndianRupee, MessageCircle, PlusCircle } from "lucide-react";
 import { formatDate, formatINR, todayIST, type DateFormat } from "@cess/shared";
 import { useAuth } from "../auth/AuthProvider";
 import { supabase } from "../lib/supabase";
 import { toAppError, unwrap } from "../lib/errors";
 import type { AssignmentRow } from "../lib/types";
 import { useRealtimeInvalidate } from "../hooks/data";
+import { WhatsAppDialog } from "./whatsapp";
 import { Alert, Badge, Button, Field, Input, Modal, ReasonDialog, Select, Spinner, Textarea, cx } from "./ui";
 
 export interface PaymentAccount {
@@ -390,6 +391,7 @@ export function PaymentsCard({ jobId, assignments, dateFormat, archived }: { job
   const refresh = useRefresh(jobId);
   const [dialog, setDialog] = useState<null | { kind: "invoice" | "payment" | "adjustment"; assignment: AssignmentWithVendor }>(null);
   const [reverse, setReverse] = useState<LedgerEntry | null>(null);
+  const [waPayment, setWaPayment] = useState<string | null>(null);
   if (!can("payments.view")) return null;
   if (data.isLoading) return <Spinner />;
   if (data.error) return <Alert tone="error">{toAppError(data.error).message}</Alert>;
@@ -464,6 +466,11 @@ export function PaymentsCard({ jobId, assignments, dateFormat, archived }: { job
                         {e.reversed && " · reversed"}
                       </span>
                     </span>
+                    {can("whatsapp.send") && e.entry_type === "payment" && !e.reversed && !e.reversal_of && (
+                      <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setWaPayment(e.id)} aria-label={`WhatsApp payment confirmation ${e.entry_no ?? ""}`}>
+                        <MessageCircle className="h-4 w-4" /> Confirm on WhatsApp
+                      </Button>
+                    )}
                     {can("payments.manage") && !archived && !e.reversed && !e.reversal_of && (
                       <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setReverse(e)} aria-label={`Reverse ${entryLabel(e)} ${e.entry_no ?? ""}`}>
                         Reverse
@@ -493,6 +500,7 @@ export function PaymentsCard({ jobId, assignments, dateFormat, archived }: { job
         <PaymentDialog jobId={jobId} assignmentId={dialog.assignment.id} account={accounts.find((x) => x.assignment_id === dialog.assignment.id) ?? null} open onClose={() => setDialog(null)} />
       )}
       {dialog?.kind === "adjustment" && <AdjustmentDialog jobId={jobId} assignmentId={dialog.assignment.id} open onClose={() => setDialog(null)} />}
+      {waPayment && <WhatsAppDialog jobId={jobId} paymentId={waPayment} initialTemplate="payment_confirmation" open onClose={() => setWaPayment(null)} />}
       <ReasonDialog
         open={!!reverse}
         title={`Reverse ${reverse ? entryLabel(reverse).toLowerCase() : ""} ${reverse?.entry_no ?? ""}?`}

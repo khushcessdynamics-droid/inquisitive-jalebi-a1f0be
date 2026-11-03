@@ -1,12 +1,12 @@
 import { useState, type ReactNode } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, CalendarCheck, CalendarClock, CheckCircle2, Pencil, RotateCcw, Send, Shuffle, Archive } from "lucide-react";
+import { ArrowRight, CalendarCheck, CalendarClock, CheckCircle2, MessageCircle, Pencil, RotateCcw, Send, Shuffle, Archive } from "lucide-react";
 import { formatDate, formatDateTimeIST, formatINR } from "@cess/shared";
 import { useAuth } from "../../auth/AuthProvider";
 import { supabase } from "../../lib/supabase";
 import { toAppError, unwrap } from "../../lib/errors";
-import { actionLabel } from "../../lib/activity";
+import { actionLabel, actorLabel } from "../../lib/activity";
 import type { ActivityRow, AssignmentRow, JobRegisterRow } from "../../lib/types";
 import { useDateFormat, useRealtimeInvalidate } from "../../hooks/data";
 import { DateText, DueText, Money, SourceBadge, StatusBadge } from "../../components/jobs";
@@ -14,6 +14,7 @@ import { AttachmentsCard } from "../../components/Attachments";
 import { CommitmentTimeline, ReviseCommitmentDialog, RevisionBadge, useCommitmentHistory, useRevisionLimit } from "../../components/commitments";
 import { ReturnsCard } from "../../components/returns";
 import { PaymentsCard } from "../../components/payments";
+import { WhatsAppDialog, WhatsAppHistory, suggestTemplate } from "../../components/whatsapp";
 import { CancelForwardDialog, EditAssignmentDialog, EditJobDialog, ReclassifyDialog, SendToVendorDialog } from "../../components/jobForms";
 import { Alert, Badge, Button, Card, PageHeader, ReasonDialog, Spinner, cx } from "../../components/ui";
 
@@ -70,7 +71,7 @@ export function JobDetailPage() {
 
   const history = useCommitmentHistory(id);
   const revisionLimit = useRevisionLimit();
-  const [dialog, setDialog] = useState<null | "edit" | "send" | "assignment" | "cancel" | "archive" | "revise" | "close" | "reopen">(null);
+  const [dialog, setDialog] = useState<null | "edit" | "send" | "assignment" | "cancel" | "archive" | "revise" | "close" | "reopen" | "whatsapp">(null);
   const [reclassify, setReclassify] = useState<AssignmentWithNames | null>(null);
 
   if (job.isLoading) return <Spinner />;
@@ -99,6 +100,11 @@ export function JobDetailPage() {
         actions={
           !j.archived_at && (
             <>
+              {j.assignment_id && can("whatsapp.send") && (
+                <Button variant="secondary" onClick={() => setDialog("whatsapp")}>
+                  <MessageCircle className="h-4 w-4" /> WhatsApp
+                </Button>
+              )}
               {editMode && (
                 <Button variant="secondary" onClick={() => setDialog("edit")}>
                   <Pencil className="h-4 w-4" /> Edit job
@@ -290,7 +296,7 @@ export function JobDetailPage() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        <Card title="History of this job" className="lg:col-span-3">
+        <Card title="History of this job" className={can("whatsapp.send") ? "lg:col-span-2" : "lg:col-span-3"}>
           {activity.isLoading ? (
             <Spinner />
           ) : activity.error ? (
@@ -300,18 +306,31 @@ export function JobDetailPage() {
               {[...(activity.data ?? [])].reverse().map((e) => (
                 <li key={e.id} className="text-sm">
                   <span className="font-medium text-slate-800">{actionLabel(e.action)}</span>
-                  <span className="text-slate-500"> · {e.actor_name ?? (e.source === "sql" ? "Database owner" : "System")} · {formatDateTimeIST(e.occurred_at, dateFormat)}</span>
+                  <span className="text-slate-500"> · {actorLabel(e)} · {formatDateTimeIST(e.occurred_at, dateFormat)}</span>
                   {e.reason && <p className="text-xs text-slate-600">Reason: {e.reason}</p>}
                 </li>
               ))}
             </ul>
           )}
         </Card>
+        {can("whatsapp.send") && (
+          <Card title="WhatsApp with the vendor">
+            <WhatsAppHistory jobId={j.id} dateFormat={dateFormat} limit={20} />
+          </Card>
+        )}
       </div>
 
       {editMode && <EditJobDialog job={j} mode={editMode} open={dialog === "edit"} onClose={() => setDialog(null)} />}
       <SendToVendorDialog job={j} open={dialog === "send"} onClose={() => setDialog(null)} />
       {open && editMode && <EditAssignmentDialog job={j} assignment={open} mode={editMode} open={dialog === "assignment"} onClose={() => setDialog(null)} />}
+      {dialog === "whatsapp" && (
+        <WhatsAppDialog
+          jobId={j.id}
+          initialTemplate={suggestTemplate(j.status, { rejected: j.qty_rejected, hasCommitment: !!j.current_commitment_date })}
+          open
+          onClose={() => setDialog(null)}
+        />
+      )}
       {open && open.current_commitment_date && (
         <ReviseCommitmentDialog
           jobId={j.id}
