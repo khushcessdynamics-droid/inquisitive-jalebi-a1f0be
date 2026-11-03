@@ -255,6 +255,7 @@ begin
          cancel_reason_text = trim(p_reason_text), cancelled_by = auth.uid()
    where id = p_assignment_id;
   if v_forward then
+    perform private.set_audit_context('job.forwarded_to_vendor', trim(p_reason_text));
     v_new := private.add_assignment(a.job_id, p_forward, a.qty_sent, a.id);
   end if;
   update public.jobs set updated_at = now() where id = a.job_id;

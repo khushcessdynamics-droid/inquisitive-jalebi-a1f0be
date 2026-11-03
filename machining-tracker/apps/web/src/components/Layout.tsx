@@ -1,6 +1,6 @@
 import { useState, type ComponentType } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Activity, Cog, HeartPulse, Home, LogOut, Menu, ShieldCheck, UserCircle, Users, X } from "lucide-react";
+import { Activity, ClipboardList, Cog, Factory, FileSpreadsheet, HeartPulse, Home, ListChecks, LogOut, Menu, PlusCircle, ShieldCheck, UserCircle, Users, X } from "lucide-react";
 import type { PermissionKey } from "@cess/shared";
 import { useAuth } from "../auth/AuthProvider";
 import { cx } from "./ui";
@@ -15,6 +15,11 @@ interface NavItem {
 // Only modules that are fully working are listed. Later phases add Jobs, Vendors, Payments, etc.
 const NAV: NavItem[] = [
   { to: "/", label: "Home", icon: Home },
+  { to: "/jobs", label: "Jobs Register", icon: ClipboardList, anyOf: ["jobs.view_all", "jobs.view_assigned"] },
+  { to: "/jobs/new", label: "New Job", icon: PlusCircle, anyOf: ["jobs.create"] },
+  { to: "/vendors", label: "Vendors", icon: Factory, anyOf: ["vendors.view"] },
+  { to: "/jobs/review", label: "Missing Data", icon: ListChecks, anyOf: ["jobs.view_all", "jobs.view_assigned"] },
+  { to: "/data", label: "Excel Import / Export", icon: FileSpreadsheet, anyOf: ["data.import", "reports.export"] },
   { to: "/admin/users", label: "Users", icon: Users, anyOf: ["users.manage"] },
   { to: "/admin/permissions", label: "Roles & Permissions", icon: ShieldCheck, anyOf: ["users.manage"] },
   { to: "/settings", label: "Settings", icon: Cog, anyOf: ["settings.change", "users.manage"] },
@@ -35,7 +40,7 @@ export function Layout() {
         <NavLink
           key={item.to}
           to={item.to}
-          end={item.to === "/"}
+          end={item.to === "/" || item.to === "/jobs"}
           onClick={() => setOpen(false)}
           className={({ isActive }) =>
             cx(

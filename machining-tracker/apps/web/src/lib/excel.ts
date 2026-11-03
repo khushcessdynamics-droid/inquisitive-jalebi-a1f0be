@@ -53,7 +53,11 @@ function toDate(v: string | number | Date | null | undefined): Date | null {
   return new Date(`${v.slice(0, 10)}T00:00:00Z`);
 }
 
-export async function downloadWorkbook(fileName: string, sheets: Array<ExportSheet<never>>): Promise<void> {
+// Each sheet can have its own row type.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnySheet = ExportSheet<any>;
+
+export async function downloadWorkbook(fileName: string, sheets: AnySheet[]): Promise<void> {
   const ExcelJS = await excel();
   const wb = new ExcelJS.Workbook();
   wb.creator = "CESS Machining Tracker";

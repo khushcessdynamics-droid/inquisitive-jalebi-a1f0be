@@ -4,7 +4,7 @@ Online, multi-user application for outsourced machining jobs and vendor manageme
 Free-first stack: **React + TypeScript + Vite + Tailwind** (static site on Cloudflare) and **Supabase Free**
 (PostgreSQL, Auth with MFA, Storage, Realtime, Edge Functions). Mandatory running cost: **₹0**.
 
-> Status: **Phase 3 (foundation) and Phase 3B (verified backups) complete and tested locally. Not deployed yet.** See `docs/PHASE3_REPORT.md`.
+> Status: **Phases 3, 3B and 4 complete and tested locally. Not deployed yet.** See `docs/PHASE3_REPORT.md` and `docs/PHASE4_REPORT.md`.
 
 ## What works today
 - Invitation-only accounts, sign-in, sign-out, sign out on all devices
@@ -20,8 +20,13 @@ Free-first stack: **React + TypeScript + Vite + Tailwind** (static site on Cloud
 - **Encrypted, verified backups** on your Windows PC (daily via Task Scheduler), with tested restore and disaster recovery
   (`docs/BACKUP_AND_RECOVERY.md`, double-click scripts in `scripts/windows/`)
 
-Jobs, vendors, commitments, reliability score, quotations, returns, quality, payments, WhatsApp, reminders,
-reports and Excel import/export follow in Phases 4-8 (see `docs/PHASE3_REPORT.md`).
+- **Jobs**: New Job, Jobs Register (tabs, search, filters, Excel export), job page with vendor journey, cancel & forward
+  with mandatory reason, attachments, Missing Data Review (`docs/PHASE4_REPORT.md`, `docs/STATUS_RULES.md`)
+- **Vendors**: vendor master with categories and contacts, vendor page with counts, Excel export
+- **Excel import** of the original tracker (or templates) with a server-checked preview
+
+Commitment history, reliability score and cost comparison (Phase 5), returns, quality and payments (Phase 6),
+WhatsApp and reminders (Phase 7), dashboard and weekly reports (Phase 8) follow.
 
 ## Folder structure
 ```

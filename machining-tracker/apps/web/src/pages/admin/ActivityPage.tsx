@@ -6,45 +6,11 @@ import { useAuth } from "../../auth/AuthProvider";
 import { supabase } from "../../lib/supabase";
 import { toAppError, unwrap } from "../../lib/errors";
 import type { ActivityRow } from "../../lib/types";
+import { actionLabel as label } from "../../lib/activity";
 import { useDateFormat, useRealtimeInvalidate } from "../../hooks/data";
 import { Alert, Badge, Button, Card, EmptyState, Field, Input, PageHeader, Select, Spinner, Table, cx, td, th } from "../../components/ui";
 
 const PAGE_SIZE = 50;
-
-const ACTION_LABELS: Record<string, string> = {
-  "auth.signed_in": "Signed in",
-  "auth.signed_out": "Signed out",
-  "mfa.enrolled": "Set up two-factor authentication",
-  "mfa.verified": "Verified two-factor code",
-  "mfa.removed": "Removed authenticator app",
-  "password.changed": "Changed password",
-  "user.invited": "User invited / activated",
-  "user.invite_link_generated": "Invitation link created",
-  "user.invite_email_sent": "Invitation email sent",
-  "user.recovery_link_generated": "Password reset link created",
-  "user.recovery_email_sent": "Password reset email sent",
-  "user.updated": "User details changed",
-  "user.profile_updated": "Own profile changed",
-  "user.role_changed": "Role changed",
-  "user.deactivated": "User deactivated",
-  "user.reactivated": "User reactivated",
-  "user.sessions_revoked": "Sessions ended by Admin",
-  "user.bootstrap_admin": "First Admin created",
-  "permission.granted": "Role permission granted",
-  "permission.revoked": "Role permission revoked",
-  "permission.user_granted": "User permission exception: allow",
-  "permission.user_denied": "User permission exception: deny",
-  "permission.override_removed": "User permission exception removed",
-  "role.mfa_policy_changed": "MFA policy changed",
-  "settings.changed": "Setting changed",
-  "system.seeded": "Initial reference data",
-};
-
-function label(action: string): string {
-  if (ACTION_LABELS[action]) return ACTION_LABELS[action];
-  const [table, op] = action.split(".");
-  return `${(table ?? "").replace(/_/g, " ")} ${op ?? ""}`.trim();
-}
 
 function Diff({ row }: { row: ActivityRow }) {
   const keys = [...new Set([...Object.keys(row.previous_value ?? {}), ...Object.keys(row.new_value ?? {})])];
@@ -146,6 +112,10 @@ function History() {
               <option value="auth">Sign-in & security</option>
               <option value="users">Users & permissions</option>
               <option value="settings">Settings</option>
+              <option value="jobs">Jobs</option>
+              <option value="vendors">Vendors</option>
+              <option value="attachments">Attachments</option>
+              <option value="import">Excel import</option>
             </Select>
           </Field>
           <Field label="Action contains" htmlFor="f-act">

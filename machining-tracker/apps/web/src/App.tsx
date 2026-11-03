@@ -18,6 +18,13 @@ const PermissionsPage = lazy(() => import("./pages/admin/PermissionsPage").then(
 const SettingsPage = lazy(() => import("./pages/admin/SettingsPage").then((m) => ({ default: m.SettingsPage })));
 const ActivityPage = lazy(() => import("./pages/admin/ActivityPage").then((m) => ({ default: m.ActivityPage })));
 const SystemHealthPage = lazy(() => import("./pages/admin/SystemHealthPage").then((m) => ({ default: m.SystemHealthPage })));
+const JobsRegisterPage = lazy(() => import("./pages/jobs/JobsRegisterPage").then((m) => ({ default: m.JobsRegisterPage })));
+const NewJobPage = lazy(() => import("./pages/jobs/NewJobPage").then((m) => ({ default: m.NewJobPage })));
+const JobDetailPage = lazy(() => import("./pages/jobs/JobDetailPage").then((m) => ({ default: m.JobDetailPage })));
+const MissingDataPage = lazy(() => import("./pages/jobs/MissingDataPage").then((m) => ({ default: m.MissingDataPage })));
+const VendorsPage = lazy(() => import("./pages/vendors/VendorsPage").then((m) => ({ default: m.VendorsPage })));
+const VendorDetailPage = lazy(() => import("./pages/vendors/VendorDetailPage").then((m) => ({ default: m.VendorDetailPage })));
+const ImportExportPage = lazy(() => import("./pages/data/ImportExportPage").then((m) => ({ default: m.ImportExportPage })));
 
 function RequireSession({ children }: { children: ReactNode }) {
   const { session, sessionLoading } = useAuth();
@@ -111,6 +118,13 @@ export function App() {
         <Route path="settings" element={<RequirePermission anyOf={["settings.change", "users.manage"]}><SettingsPage /></RequirePermission>} />
         <Route path="activity" element={<RequirePermission anyOf={["activity.view"]}><ActivityPage /></RequirePermission>} />
         <Route path="system" element={<RequirePermission anyOf={["system.view"]}><SystemHealthPage /></RequirePermission>} />
+        <Route path="jobs" element={<RequirePermission anyOf={["jobs.view_all", "jobs.view_assigned"]}><JobsRegisterPage /></RequirePermission>} />
+        <Route path="jobs/new" element={<RequirePermission anyOf={["jobs.create"]}><NewJobPage /></RequirePermission>} />
+        <Route path="jobs/review" element={<RequirePermission anyOf={["jobs.view_all", "jobs.view_assigned"]}><MissingDataPage /></RequirePermission>} />
+        <Route path="jobs/:id" element={<RequirePermission anyOf={["jobs.view_all", "jobs.view_assigned"]}><JobDetailPage /></RequirePermission>} />
+        <Route path="vendors" element={<RequirePermission anyOf={["vendors.view"]}><VendorsPage /></RequirePermission>} />
+        <Route path="vendors/:id" element={<RequirePermission anyOf={["vendors.view"]}><VendorDetailPage /></RequirePermission>} />
+        <Route path="data" element={<RequirePermission anyOf={["data.import", "reports.export"]}><ImportExportPage /></RequirePermission>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -17,7 +17,7 @@ const STATUS_TONE: Record<string, string> = {
 
 export function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={cx("inline-flex whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset", STATUS_TONE[status] ?? STATUS_TONE.Draft)}>
+    <span className={cx("inline-flex rounded-full px-2 py-0.5 text-xs font-medium leading-tight ring-1 ring-inset", STATUS_TONE[status] ?? STATUS_TONE.Draft)}>
       {status}
     </span>
   );
