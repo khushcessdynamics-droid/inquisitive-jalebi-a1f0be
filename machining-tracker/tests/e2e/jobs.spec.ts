@@ -84,8 +84,9 @@ test("Manager adds vendors, creates a job, cancels and forwards it, and uploads 
   await page.locator("#fw-commit").fill(istDate(6));
   await page.getByRole("button", { name: "Cancel and forward" }).click();
 
-  await expect(page.getByText("2. Precision Works")).toBeVisible();
-  await expect(page.getByText("1. Shree Engineering")).toBeVisible();
+  // vendor names appear in the vendor journey and in the commitment timeline
+  await expect(page.getByText("2. Precision Works").first()).toBeVisible();
+  await expect(page.getByText("1. Shree Engineering").first()).toBeVisible();
   await expect(page.getByText("Vendor-caused")).toBeVisible();
   await expect(page.getByText("forwarded to Precision Works")).toBeVisible();
   await expect(page.getByText("Cancelled and forwarded to another vendor")).toBeVisible(); // job history

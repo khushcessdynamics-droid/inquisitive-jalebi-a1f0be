@@ -30,12 +30,15 @@ Screenshots: `docs/screenshots/18-*.png` to `28-*.png`.
 | Suite | Result |
 |---|---|
 | Unit (adds commitment outcome against original / latest date, financial-year list, score labels, cost-comparison settings) | 61 / 61 |
-| Integration (real local Supabase; 20 Phase 5 tests: **Example 2** revision history, **Example 7** reliability with exact factor values and sample sizes, **Example 6** comparison figures and recommendation, settings, permissions, append-only history) | RESULT_INTEGRATION |
-| Browser (Playwright): revise commitment and timeline, reliability ranking and "how calculated" with Excel export, three quotations with figures, charts, manual choice with reason, confirmed job creation, phone layout of all Phase 5 screens | RESULT_E2E |
+| Integration (real local Supabase; 20 Phase 5 tests: **Example 2** revision history, **Example 7** reliability with exact factor values and sample sizes, **Example 6** comparison figures and recommendation, settings, permissions, append-only history) | 75 / 75 (all phases) |
+| Browser (Playwright): revise commitment and timeline, reliability ranking and "how calculated" with Excel export, three quotations with figures, charts, manual choice with reason, confirmed job creation, phone layout of all Phase 5 screens | 12 / 12 (all phases) |
 | Type check, production build | clean |
 
-Also fixed while testing on a phone: cards inside grids could not shrink below their table width, and a hidden table header label
-could stretch the page sideways; both fixed in the shared components, so every page benefits.
+Also fixed during testing:
+- On a phone, cards inside grids could not shrink below their table width, and a hidden table header label could stretch the page
+  sideways; both fixed in the shared components, so every page benefits.
+- Authenticator setup: two setups started at the same moment (second tab, page remount) could fail with "a factor with this name
+  already exists". Each setup now gets a unique name; unfinished setups are still removed at the next start.
 
 ## Decisions I made that you may want to change
 1. **Who asked for a revision.** Each revision records whether the vendor or CESS asked for it. Only vendor-requested revisions lower

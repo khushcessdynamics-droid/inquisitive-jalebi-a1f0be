@@ -37,7 +37,9 @@ export function MfaPage() {
         for (const f of unverified) await supabase.auth.mfa.unenroll({ factorId: f.id });
         const { data, error: err } = await supabase.auth.mfa.enroll({
           factorType: "totp",
-          friendlyName: `Authenticator ${new Date().toISOString().slice(0, 10)}`,
+          // unique per attempt: two setups started at the same moment (second tab, remount) must not collide;
+          // unfinished factors are removed at the next start (above)
+          friendlyName: `Authenticator ${new Date().toISOString().slice(0, 16).replace("T", " ")} ${crypto.randomUUID().slice(0, 4)}`,
           issuer: "CESS Machining Tracker",
         });
         if (err || !data) throw new Error(err?.message ?? "Could not start MFA setup");
