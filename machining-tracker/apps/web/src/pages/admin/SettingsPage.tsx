@@ -484,7 +484,7 @@ function WhatsAppSettings({ row }: { row: SettingRow }) {
         {templates.isLoading ? <Spinner /> : templates.error ? <Alert tone="error">{toAppError(templates.error).message}</Alert> : (
           <div className="space-y-3">
             {templates.data!.map((t) => (
-              <TemplateEditor key={`${t.key}-${t.version}`} t={t} onSaved={() => void templates.refetch()} />
+              <TemplateEditor key={t.key} t={t} onSaved={() => void templates.refetch()} />
             ))}
           </div>
         )}
@@ -505,6 +505,11 @@ function TemplateEditor({ t, onSaved }: { t: { key: string; label: string; body:
   const [active, setActive] = useState(t.is_active);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: "success" | "error" | "warning"; text: string } | null>(null);
+  // take the saved text when the server copy changes (after saving, or another Admin's change), keeping the message
+  useEffect(() => {
+    setBody(t.body);
+    setActive(t.is_active);
+  }, [t.version, t.body, t.is_active]);
   const preview = renderTemplate(body, templateValues(SAMPLE, "dd-MMM-yyyy"));
   const dirty = body !== t.body || active !== t.is_active;
   return (
@@ -512,7 +517,15 @@ function TemplateEditor({ t, onSaved }: { t: { key: string; label: string; body:
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold text-slate-900">{t.label}</p>
         <label className="flex items-center gap-2 text-xs text-slate-700">
-          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> In use
+          <input
+            type="checkbox"
+            checked={active}
+            onChange={(e) => {
+              setActive(e.target.checked);
+              setMsg(null);
+            }}
+          />{" "}
+          In use
         </label>
       </div>
       <div className="mt-2 grid gap-3 lg:grid-cols-2">
@@ -522,7 +535,10 @@ function TemplateEditor({ t, onSaved }: { t: { key: string; label: string; body:
             rows={5}
             maxLength={2000}
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={(e) => {
+              setBody(e.target.value);
+              setMsg(null);
+            }}
             className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-1 focus:ring-brand-600"
           />
         </Field>

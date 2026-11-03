@@ -130,7 +130,7 @@ test("Example 5: Admin records the invoice and payments; balance, statuses, stat
   await expect(dialog.getByRole("button", { name: "Save payment" })).toBeDisabled();
   await dialog.getByRole("button", { name: "Cancel" }).click();
 
-  await page.getByRole("link", { name: "Payments" }).click();
+  await page.getByRole("link", { name: "Payments", exact: true }).click();
   await expect(page.getByRole("row", { name: /E2E-6001/ }).getByText("₹15,000.00").first()).toBeVisible();
   await page.getByRole("tab", { name: "Vendor-wise" }).click();
   await page.getByRole("row", { name: /Ganesh Engineering/ }).getByRole("button", { name: "Statement" }).click();

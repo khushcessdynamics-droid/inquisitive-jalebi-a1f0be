@@ -47,7 +47,7 @@ test("Manager adds vendors, creates a job, cancels and forwards it, and uploads 
   await login(page);
 
   // vendors
-  await page.getByRole("link", { name: "Vendors" }).click();
+  await page.getByRole("link", { name: "Vendors", exact: true }).click();
   for (const [name, category] of [["Shree Engineering", "CNC Turning"], ["Precision Works", null]] as const) {
     await page.getByRole("button", { name: "Add vendor" }).click();
     await page.getByLabel("Vendor name (as used on jobs)").fill(name);
@@ -58,7 +58,7 @@ test("Manager adds vendors, creates a job, cancels and forwards it, and uploads 
   }
 
   // new job
-  await page.getByRole("link", { name: "New Job" }).click();
+  await page.getByRole("link", { name: "New Job", exact: true }).click();
   await page.getByLabel("Part No / Part Name").fill("4711 / Drive Shaft");
   await page.getByLabel("Quantity sent").fill("100");
   await page.getByLabel("Work / machining category").selectOption({ label: "CNC Turning" });
@@ -92,7 +92,7 @@ test("Manager adds vendors, creates a job, cancels and forwards it, and uploads 
   await expect(page.getByText("Cancelled and forwarded to another vendor")).toBeVisible(); // job history
 
   // register
-  await page.getByRole("link", { name: "Jobs Register" }).click();
+  await page.getByRole("link", { name: "Jobs Register", exact: true }).click();
   await expect(page.getByRole("cell", { name: /4711 \/ Drive Shaft/ })).toBeVisible();
   await expect(page.getByText("2 vendors (forwarded)")).toBeVisible();
   await page.getByLabel("Search job ID, part or vendor").fill("Shaft");
@@ -124,7 +124,7 @@ test("Excel import of the original tracker layout with preview, then classifying
   await wb.xlsx.writeFile(file);
 
   await login(page);
-  await page.getByRole("link", { name: "Excel Import / Export" }).click();
+  await page.getByRole("link", { name: "Excel Import / Export", exact: true }).click();
   await page.locator('input[type="file"]').setInputFiles(file);
   await expect(page.getByText(/original Excel tracker/)).toBeVisible();
   await expect(page.getByText(/forming/)).toContainText("2 job(s)");
@@ -144,7 +144,7 @@ test("Excel import of the original tracker layout with preview, then classifying
   await expect(page.getByRole("link", { name: /JOB-\d{4}-\d{4}/ }).first()).toBeVisible();
 
   // the imported cancellation has no recorded reason: classify it
-  await page.getByRole("link", { name: "Missing Data" }).click();
+  await page.getByRole("link", { name: "Missing Data", exact: true }).click();
   await expect(page.getByText("Cancellation not classified").first()).toBeVisible();
   await page.getByRole("button", { name: "Classify" }).click();
   await page.getByLabel("Reason").selectOption({ label: "Vendor: Vendor failed to meet delivery commitment" });

@@ -100,7 +100,7 @@ test("Example 2: revising the committed date keeps the original and shows the ti
   await expect(page.getByText("Revised 1×").first()).toBeVisible();
   await expect(page.getByText("Committed date revised")).toBeVisible(); // job history
 
-  await page.getByRole("link", { name: "Jobs Register" }).click();
+  await page.getByRole("link", { name: "Jobs Register", exact: true }).click();
   await page.getByLabel("Search job ID, part or vendor").fill("Spindle");
   await page.getByRole("button", { name: "Search" }).click();
   await expect(page.getByRole("row", { name: /E2E-9001/ }).getByText("Revised 1×")).toBeVisible();
@@ -108,7 +108,7 @@ test("Example 2: revising the committed date keeps the original and shows the ti
 
 test("Example 7: reliability ranking shows sample sizes and how each score was calculated", async ({ page }) => {
   await login(page);
-  await page.getByRole("link", { name: "Vendor Reliability" }).click();
+  await page.getByRole("link", { name: "Vendor Reliability", exact: true }).click();
   await page.getByLabel("Financial year").selectOption("all");
   const kiran = page.getByRole("row", { name: /Kiran Precision/ });
   await expect(kiran.getByText(/^(Excellent|Good|Average|Needs Improvement)$/)).toBeVisible();
@@ -127,7 +127,7 @@ test("Example 7: reliability ranking shows sample sizes and how each score was c
 
 test("Example 6: three quotations, lowest/highest/average/% difference, manual choice, then a confirmed job", async ({ page }) => {
   await login(page);
-  await page.getByRole("link", { name: "Cost Comparison" }).click();
+  await page.getByRole("link", { name: "Cost Comparison", exact: true }).click();
   await page.getByRole("button", { name: "New comparison" }).click();
   let dialog = page.getByRole("dialog");
   await dialog.getByLabel("Part No / Part Name").fill("E2E-4711 / Gear Shaft");

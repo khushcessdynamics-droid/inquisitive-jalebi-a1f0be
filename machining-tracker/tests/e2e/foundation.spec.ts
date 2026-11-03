@@ -40,9 +40,9 @@ test("Admin signs in, must set up MFA, then changes a setting that appears in th
 
   await expect(page.getByRole("heading", { name: /Welcome, Nityam Admin/ })).toBeVisible();
   await expect(page.getByText("On (verified this session)")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Users" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Users", exact: true })).toBeVisible();
 
-  await page.getByRole("link", { name: "Settings" }).click();
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
   await page.getByLabel("Company name").fill("CESS Dynamics Pvt Ltd");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Saved.")).toBeVisible();
@@ -52,7 +52,7 @@ test("Admin signs in, must set up MFA, then changes a setting that appears in th
   await expect(page.getByText("Total: 105 / 100")).toBeVisible();
   await expect(page.getByRole("button", { name: "Save changes" })).toBeDisabled();
 
-  await page.getByRole("link", { name: "Activity History" }).click();
+  await page.getByRole("link", { name: "Activity History", exact: true }).click();
   await expect(page.getByRole("cell", { name: /Setting changed/ }).first()).toBeVisible();
   await page.getByRole("cell", { name: /Setting changed/ }).first().click();
   await expect(page.getByText("CESS Dynamics Pvt Ltd").first()).toBeVisible();
@@ -70,7 +70,7 @@ test("Admin invites a Staff user and gets a one-time link", async ({ page }) => 
   await page.getByRole("button", { name: "Verify" }).click();
   await expect(page.getByRole("heading", { name: /Welcome/ })).toBeVisible();
 
-  await page.getByRole("link", { name: "Users" }).click();
+  await page.getByRole("link", { name: "Users", exact: true }).click();
   await page.getByRole("button", { name: "Invite user" }).click();
   await page.getByLabel("Full name").fill("Sanjay Staff");
   await page.getByLabel("Email", { exact: true }).fill(staffEmail);
@@ -95,8 +95,8 @@ test("Staff accepts the invitation, sets a password and only sees permitted page
   await page.getByRole("button", { name: "Save password" }).click();
 
   await expect(page.getByRole("heading", { name: /Welcome, Sanjay Staff/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Users" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Settings" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Users", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Settings", exact: true })).toHaveCount(0);
   await page.goto("/admin/users");
   await expect(page.getByText("You do not have permission to open this page.")).toBeVisible();
 

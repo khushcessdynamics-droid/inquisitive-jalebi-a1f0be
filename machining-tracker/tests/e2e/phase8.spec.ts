@@ -87,12 +87,12 @@ test("dashboard: KPIs and tables from the records; clicking opens the filtered r
   await expect(page.getByRole("row", { name: /E2E-8001/ })).toBeVisible();
   await expect(page.getByText(new RegExp(`^${await count("status = 'Overdue'")} jobs? · page 1 of`))).toBeVisible();
 
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Dashboard", exact: true }).click();
   await kpi("Due today").click();
   await expect(page.getByText(/Filtered from the dashboard: status: Due Today/)).toBeVisible();
   await expect(page.getByRole("row", { name: /E2E-8002/ })).toBeVisible();
 
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Dashboard", exact: true }).click();
   await page.getByRole("list", { name: "Vendor-wise job distribution" }).getByRole("button", { name: /Kaveri Engineering/ }).click();
   await expect(page).toHaveURL(new RegExp(`vendor=${vendorId}`));
   await expect(page.getByRole("row", { name: /E2E-800/ }).first()).toBeVisible();
@@ -100,7 +100,7 @@ test("dashboard: KPIs and tables from the records; clicking opens the filtered r
 
 test("weekly report: make it for last week, view A-F with comparison, download PDF and Excel", async ({ page }) => {
   await login(page, managerEmail);
-  await page.getByRole("link", { name: "Weekly Reports" }).click();
+  await page.getByRole("link", { name: "Weekly Reports", exact: true }).click();
   await expect(page.getByLabel("Week starting")).toHaveValue(lastMonday());
   await page.getByRole("button", { name: "Make report" }).click();
   await expect(page.getByRole("heading", { name: /Weekly management report:/ })).toBeVisible();
@@ -126,7 +126,7 @@ test("weekly report: make it for last week, view A-F with comparison, download P
 
 test("quality records with export; Staff see only their own jobs on the home page", async ({ page, browser }) => {
   await login(page, managerEmail);
-  await page.getByRole("link", { name: "Quality" }).click();
+  await page.getByRole("link", { name: "Quality", exact: true }).click();
   await page.getByLabel("Financial year (inspection date)").selectOption("all");
   await expect(page.getByRole("row", { name: /E2E-8003/ })).toContainText("Partially Accepted");
   const dl = page.waitForEvent("download");
@@ -138,7 +138,7 @@ test("quality records with export; Staff see only their own jobs on the home pag
   await expect(staffPage.getByRole("link").filter({ hasText: "My open jobs" })).toContainText("1");
   await expect(staffPage.getByText("E2E-8002 / Due Today Bush")).toBeVisible();
   await expect(staffPage.getByText("E2E-8001")).toHaveCount(0);
-  await expect(staffPage.getByRole("link", { name: "Weekly Reports" })).toHaveCount(0);
+  await expect(staffPage.getByRole("link", { name: "Weekly Reports", exact: true })).toHaveCount(0);
   await staffPage.close();
 });
 

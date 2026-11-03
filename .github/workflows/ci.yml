@@ -46,7 +46,9 @@ jobs:
           grep -q "frame-ancestors 'none'" apps/web/dist/_headers
           grep -q "connect-src 'self' https://abcdefghijklmnopqrst.supabase.co" apps/web/dist/_headers
           test ! -e apps/web/dist/_redirects
-          ! grep -rlE "sb_secret_|service_role|postgres(ql)?://" apps/web/dist
+          # real key / password formats only (the Supabase library itself contains the text "sb_secret_");
+          # service_role tokens are decoded and checked by tools/deploy-check/verify.mjs in the next job
+          ! grep -rlE "sb_secret_[A-Za-z0-9_-]{10,}|postgres(ql)?://[^\"'[:space:]]*:[^\"'[:space:]]*@" apps/web/dist
 
   database-and-browser:
     name: Database, browser and production-build tests (local Supabase)

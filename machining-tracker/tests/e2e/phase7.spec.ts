@@ -115,7 +115,7 @@ test("reminders from the server engine reach the notification center", async ({ 
 
 test("Admin: reminder schedule preview and template editing with placeholder checks", async ({ page }) => {
   await login(page, adminEmail);
-  await page.getByRole("link", { name: "Settings" }).click();
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
   await page.getByRole("tab", { name: "Reminders" }).click();
   await expect(page.getByText(/Preview: a job committed for/)).toBeVisible();
   await expect(page.getByText(/\(due soon\) · .* \(due soon\) · .* \(due today\) · .* \(overdue\)/)).toBeVisible();
