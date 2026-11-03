@@ -27,8 +27,8 @@ Screenshots: `docs/screenshots/29-*.png` to `37-*.png`.
 | Suite | Result |
 |---|---|
 | Unit | 61 / 61 |
-| Integration (real local Supabase; 16 Phase 6 tests: **Example 3**, **Example 4**, rework, automatic completion, not completed while awaiting inspection, close with reason, reopen and void, unknown quantity, **Example 5** with charges/discount, overpayment, reversal, Fully Paid, Manager view-only and Staff blocked (**Example 10**), vendor-wise / monthly / statement, quality factor in reliability) | RESULT_INTEGRATION |
-| Browser (Playwright): 60 of 100 returned, 55/5 inspection, rest returned and inspected → Completed; Manager sees payments read-only; Admin invoice ₹50,000, advance ₹20,000, payment ₹15,000 → balance ₹15,000, overpayment blocked, statement download; phone layout | RESULT_E2E |
+| Integration (real local Supabase; 16 Phase 6 tests: **Example 3**, **Example 4**, rework, automatic completion, not completed while awaiting inspection, close with reason, reopen and void, unknown quantity, **Example 5** with charges/discount, overpayment, reversal, Fully Paid, Manager view-only and Staff blocked (**Example 10**), vendor-wise / monthly / statement, quality factor in reliability) | 91 / 91 (all phases) |
+| Browser (Playwright): 60 of 100 returned, 55/5 inspection, rest returned and inspected → Completed; Manager sees payments read-only; Admin invoice ₹50,000, advance ₹20,000, payment ₹15,000 → balance ₹15,000, overpayment blocked, statement download; phone layout | 15 / 15 (all phases) |
 | Type check, production build | clean |
 
 Fixed during testing: after the last return completed a job, the return dialog closed without showing "the job is now Completed".
