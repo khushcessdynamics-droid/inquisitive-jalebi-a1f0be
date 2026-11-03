@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { Alert, Button, Field, Input } from "../../components/ui";
 import { AuthShell } from "./AuthShell";
+import { useCaptcha } from "../../components/Turnstile";
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const captcha = useCaptcha();
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -16,8 +18,14 @@ export function ForgotPasswordPage() {
     setError(null);
     const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/auth/confirm`,
+      captchaToken: captcha.enabled ? (captcha.token ?? undefined) : undefined,
     });
+    if (captcha.enabled) captcha.reset();
     setBusy(false);
+    if (err && /captcha/i.test(err.message)) {
+      setError("The security check did not pass. Please complete it again.");
+      return;
+    }
     if (err && (err.status === 429 || /rate limit/i.test(err.message))) {
       setError("Too many requests. Please wait and try again, or ask your Admin for a reset link.");
       return;
@@ -38,8 +46,10 @@ export function ForgotPasswordPage() {
           <Field label="Email" htmlFor="email">
             <Input id="email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
           </Field>
+          {captcha.element}
+          {captcha.error && <Alert tone="warning">{captcha.error}</Alert>}
           {error && <Alert tone="error">{error}</Alert>}
-          <Button type="submit" className="w-full" loading={busy} disabled={!email.includes("@")}>
+          <Button type="submit" className="w-full" loading={busy} disabled={!email.includes("@") || !captcha.ready}>
             Send reset link
           </Button>
         </form>

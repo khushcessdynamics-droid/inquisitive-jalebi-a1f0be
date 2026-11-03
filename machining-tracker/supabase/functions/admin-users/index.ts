@@ -5,15 +5,18 @@
 //   recovery - return a one-time password-reset link for an existing user (or email it)
 //
 // Security:
-//   * The gateway verifies the caller's JWT (verify_jwt = true).
-//   * The function then asks the database `has_permission('users.manage')` WITH THE CALLER'S TOKEN, so the same
-//     rules apply as everywhere else: active profile, live session, Admin role and MFA (aal2).
+//   * The platform JWT check is off (verify_jwt = false: Supabase warns it breaks with the new asymmetric signing keys).
+//     The caller is verified here instead: a Bearer token is required and the function asks the database
+//     `has_permission('users.manage')` WITH THE CALLER'S TOKEN, so the token is validated by the database API and the same
+//     rules apply as everywhere else: active profile, live session, Admin role and MFA (aal2). Anything else gets 401/403.
 //   * Links are returned only to that Admin and are never written to logs or the activity history.
 //   * No third-party imports: only the Supabase REST and Auth HTTP APIs via fetch (no supply-chain or boot-time downloads).
+import { pickKeys } from "./keys.ts";
 
 const SUPABASE_URL = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/+$/, "");
-const SERVICE_KEY = Deno.env.get("SUPABASE_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const PUBLIC_KEY = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const KEYS = pickKeys((name) => Deno.env.get(name));
+const SERVICE_KEY = KEYS.secret;
+const PUBLIC_KEY = KEYS.publishable;
 const SITE_URL = (Deno.env.get("APP_SITE_URL") ?? "").replace(/\/+$/, "");
 const ALLOWED_ORIGINS = (Deno.env.get("APP_ALLOWED_ORIGINS") ?? SITE_URL)
   .split(",")

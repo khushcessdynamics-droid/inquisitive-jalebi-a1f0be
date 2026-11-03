@@ -44,7 +44,9 @@ All values were read on the providers' official pages on 2026-11-02. Providers c
 | Pages builds | 500/month, 1 at a time, 20-minute timeout | developers.cloudflare.com/pages/platform/limits |
 | Pages files | 20,000 files per site, 25 MiB per file | same |
 | Static asset requests and bandwidth | Free and unlimited | developers.cloudflare.com/pages/functions/pricing |
-| `_headers`, `_redirects` | Supported (do not apply to Functions responses) | developers.cloudflare.com/pages/configuration/headers |
+| `_headers`, `_redirects` | Supported (do not apply to Functions responses); up to 100 header rules, 2,000 characters per line | developers.cloudflare.com/pages/configuration/headers |
+| Single-page apps | Without a top-level `404.html`, Pages serves the app for unknown paths, so no `_redirects` is needed (redirect rules apply even when a file exists, so a catch-all rewrite is avoided) | developers.cloudflare.com/pages/configuration/serving-pages, …/redirects (checked 2026-11-03) |
+| Build image | v3: Node 22 by default, `NODE_VERSION` to pin it, `SKIP_DEPENDENCY_INSTALL=1` to install with our own `npm ci` | developers.cloudflare.com/pages/configuration/build-image (checked 2026-11-03) |
 | Workers / Pages Functions | 100,000 requests/day, 10 ms CPU each; over the limit you get errors (1027/429), not a bill | developers.cloudflare.com/workers/platform/limits |
 | Turnstile CAPTCHA | Free, unlimited challenges | developers.cloudflare.com/turnstile/plans |
 | Platform direction | Cloudflare now recommends **Workers with static assets** for new projects; no Pages deprecation notice found | developers.cloudflare.com/pages |

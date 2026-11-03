@@ -4,12 +4,14 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../auth/AuthProvider";
 import { Alert, Button, Field, Input } from "../../components/ui";
 import { AuthShell } from "./AuthShell";
+import { useCaptcha } from "../../components/Turnstile";
 
 function loginErrorMessage(message: string, status?: number): string {
   if (status === 429 || /rate limit|too many/i.test(message)) return "Too many sign-in attempts. Please wait a few minutes and try again.";
   if (/invalid login credentials/i.test(message)) return "Email or password is incorrect.";
   if (/banned/i.test(message)) return "This account is deactivated. Contact your Admin.";
   if (/email not confirmed/i.test(message)) return "This account has not been activated yet. Use the link your Admin sent you.";
+  if (/captcha/i.test(message)) return "The security check did not pass. Please complete it again.";
   return message;
 }
 
@@ -22,6 +24,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const captcha = useCaptcha();
 
   if (session && access?.status === "ok") return <Navigate to={from} replace />;
   if (session && access?.status === "mfa_required") return <Navigate to="/mfa" replace state={{ from }} />;
@@ -31,7 +34,12 @@ export function LoginPage() {
     setBusy(true);
     setError(null);
     clearNotice();
-    const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    const { error: err } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+      options: captcha.enabled ? { captchaToken: captcha.token ?? undefined } : undefined,
+    });
+    if (captcha.enabled) captcha.reset(); // tokens are single-use
     if (err) {
       setError(loginErrorMessage(err.message, err.status));
       setBusy(false);
@@ -56,8 +64,10 @@ export function LoginPage() {
         <Field label="Password" htmlFor="password">
           <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </Field>
+        {captcha.element}
+        {captcha.error && <Alert tone="warning">{captcha.error}</Alert>}
         {error && <Alert tone="error">{error}</Alert>}
-        <Button type="submit" className="w-full" loading={busy} disabled={!email || !password}>
+        <Button type="submit" className="w-full" loading={busy} disabled={!email || !password || !captcha.ready}>
           Sign in
         </Button>
       </form>

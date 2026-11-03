@@ -22,7 +22,9 @@
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test": "vitest run --project unit && npm run test:integration",
-    "test:e2e": "supabase db reset && playwright test"
+    "test:e2e": "supabase db reset && playwright test",
+    "build:prod-test": "npm run build -w apps/web && VITE_TURNSTILE_SITE_KEY=1x00000000000000000000AA npm run build -w apps/web -- --outDir dist-captcha",
+    "test:prod": "supabase db reset && npm run build:prod-test && playwright test -c playwright.prod.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

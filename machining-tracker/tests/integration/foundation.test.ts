@@ -94,6 +94,24 @@ describe("anonymous access", () => {
     const r = await callFunction(null, { action: "invite", email: "x@example.test", full_name: "X", role_key: "admin" });
     expect(r.status).toBe(401);
   });
+
+  it("the Edge Function rejects forged tokens and the public key used as a sign-in token", async () => {
+    // the platform JWT check is off (verify_jwt = false), so the function itself must refuse these
+    const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
+    const payload = Buffer.from(JSON.stringify({ sub: "00000000-0000-0000-0000-000000000001", role: "authenticated", aal: "aal2", exp: 4102444800 })).toString("base64url");
+    for (const bearer of [`${header}.${payload}.forged-signature`, env.publishableKey, "not-a-token"]) {
+      const res = await fetch(functionsUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: env.publishableKey, Origin: ORIGIN, Authorization: `Bearer ${bearer}` },
+        body: JSON.stringify({ action: "invite", email: uniqueEmail("forged"), full_name: "X", role_key: "admin", delivery: "link" }),
+      });
+      const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      expect([401, 403]).toContain(res.status);
+      expect(body.link).toBeUndefined();
+    }
+    const created = await sql("select 1 from auth.users where email like 'forged%'");
+    expect(created).toHaveLength(0);
+  });
 });
 
 describe("first Admin bootstrap and MFA", () => {

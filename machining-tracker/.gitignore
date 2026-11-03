@@ -10,3 +10,4 @@ playwright-report/
 supabase/.temp/
 supabase/.branches/
 supabase/functions/.env
+dist-*/

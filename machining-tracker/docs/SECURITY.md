@@ -75,11 +75,19 @@ Job visibility for Staff uses the separate **Assigned Staff User** field (kept a
 
 ## Data protection
 - Supabase encrypts data at rest and in transit (TLS). The database is reached only through the API; no direct database port is used by the app.
-- No secret in the frontend or in Git (`.gitignore` covers `.env*`). The Edge Function reads the secret key from Supabase's environment.
+- No secret in the frontend or in Git (`.gitignore` covers `.env*`). The Edge Function reads the secret key from Supabase's environment
+  (`SUPABASE_SECRET_KEYS` on hosted projects, falling back to the legacy `SUPABASE_SERVICE_ROLE_KEY`).
+- The Edge Function is deployed with the platform JWT check off (`verify_jwt = false`), because Supabase warns that check breaks
+  with its new asymmetric signing keys. The function itself requires a Bearer token and asks the database
+  `has_permission('users.manage')` with that token, so forged, expired or public-key tokens get 401/403 (integration test).
+- The deployment checker (`tools/deploy-check/verify.mjs`) scans every JavaScript file of the live site for secret keys,
+  `service_role` tokens and database connection strings, and confirms that nothing can be read without signing in.
 - Links and passwords are never logged. Error messages to users are generic; details stay server-side.
 
 ## Browser security
 - Strict Content-Security-Policy (`script-src 'self'`, `connect-src` limited to the Supabase project, `frame-ancestors 'none'`), HSTS, nosniff, Referrer-Policy, Permissions-Policy (generated `_headers`).
+  With the optional Turnstile CAPTCHA, only `https://challenges.cloudflare.com` is added to `script-src` and `frame-src`.
+- Optional CAPTCHA on sign-in and password reset (Cloudflare Turnstile, verified by Supabase Auth on the server).
 - React escapes output; no `dangerouslySetInnerHTML`. Supabase tokens live in browser storage, so the CSP is the main XSS defence.
 - CSRF: the API uses `Authorization` bearer tokens, not cookies, so classic CSRF does not apply. The Edge Function also rejects origins not on its allow-list.
 

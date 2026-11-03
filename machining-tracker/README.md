@@ -101,12 +101,21 @@ npm run test:integration
 npm run test:e2e
 ```
 ```bash
+npm run test:prod
+```
+```bash
 npm run typecheck
 ```
-The integration and e2e commands **reset the local database** first; they refuse to run against anything other than `127.0.0.1`.
+The integration, e2e and prod commands **reset the local database** first; they refuse to run against anything other than `127.0.0.1`.
+`test:prod` builds the production website and serves it the way Cloudflare Pages does (security headers, direct links), then
+checks the main screens under the Content-Security-Policy and the optional CAPTCHA. GitHub Actions runs all of these on every
+pull request (`.github/workflows/ci.yml`).
 
 ## Deployment
-Not done yet. Accounts, credentials and exact steps: `docs/SETUP_ACCOUNTS.md`. Nothing is created or paid for without your approval.
+**Prepared, not deployed.** Step-by-step guide: `docs/DEPLOYMENT.md` (Supabase Free + Cloudflare Pages Free, ₹0, no payment card).
+After deployment, `tools/deploy-check/verify.mjs` checks the public site and the Supabase project from outside (HTTPS, security
+headers, no secrets in the JavaScript, nothing readable without signing in, private files, Edge Function origin rules).
+Nothing is created or paid for without your approval.
 
 ## Backups
 Supabase Free has no backups, so `tools/backup` makes them on your PC: encrypted, test-restored before being marked verified, kept by
