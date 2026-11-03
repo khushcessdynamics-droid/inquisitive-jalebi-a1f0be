@@ -28,9 +28,9 @@ Screenshots: `docs/screenshots/38-*.png` to `45-*.png`.
 ## Tests (run 2026-11-03)
 | Suite | Result |
 |---|---|
-| Unit (adds number normalisation, wa.me link, template filling with [missing], payment values, reminder schedule = database rule) | RESULT_UNIT |
-| Integration (real local Supabase; 10 Phase 7 tests: templates and edit rights, message facts, opened-not-sent log, duplicate confirmation, append-only history, the schedule on a fixed date and time, run-time gate, no duplicates, recipients, private notifications, recalculation after a revision, stop on completion / return / cancellation, switching off, scheduler present, Admin-only run-now) | RESULT_INTEGRATION |
-| Browser (Playwright): overdue WhatsApp message with edit, exact wa.me link, mark as sent, history, duplicate warning; notification from the engine with unread badge and one-click WhatsApp; reminder settings preview and template editing; phone layout | RESULT_E2E |
+| Unit (adds number normalisation, wa.me link, template filling with [missing], payment values, reminder schedule = database rule) | 69 / 69 |
+| Integration (real local Supabase; 10 Phase 7 tests: templates and edit rights, message facts, opened-not-sent log, duplicate confirmation, append-only history, the schedule on a fixed date and time, run-time gate, no duplicates, recipients, private notifications, recalculation after a revision, stop on completion / return / cancellation, switching off, scheduler present, Admin-only run-now) | 101 / 101 (all phases) |
+| Browser (Playwright): overdue WhatsApp message with edit, exact wa.me link, mark as sent, history, duplicate warning; notification from the engine with unread badge and one-click WhatsApp; reminder settings preview and template editing; phone layout | 19 / 19 (all phases) |
 | Type check, production build | clean |
 
 ## Decisions I made that you may want to change
