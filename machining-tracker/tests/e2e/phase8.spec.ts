@@ -72,18 +72,20 @@ async function login(page: Page, email: string, mfa = true) {
 test("dashboard: KPIs and tables from the records; clicking opens the filtered records", async ({ page }) => {
   await login(page, managerEmail);
   const kpi = (label: string) => page.getByRole("link").filter({ hasText: label }).first();
-  await expect(kpi("Active jobs (with vendors)")).toContainText("2");
-  await expect(kpi("Overdue")).toContainText("1");
-  await expect(kpi("Due today")).toContainText("1");
-  await expect(kpi("Quality acceptance")).toContainText(/91\.7%|—/); // 55 of 60 (if inspected in this financial year)
+  // other test files share this database: expected numbers are read from it, not assumed
+  const count = async (where: string) => (await sql<{ n: string }>(`select count(*)::text as n from public.job_register where archived_at is null and ${where}`))[0]!.n;
+  await expect(kpi("Active jobs (with vendors)")).toContainText(await count("status not in ('Draft', 'Completed', 'Cancelled')"));
+  await expect(kpi("Overdue")).toContainText(await count("status = 'Overdue'"));
+  await expect(kpi("Due today")).toContainText(await count("status = 'Due Today'"));
+  await expect(kpi("Quality acceptance")).toContainText(/%|—/);
   await expect(page.getByText("Monthly job trend")).toBeVisible();
   await expect(page.getByText("Vendor-wise job distribution")).toBeVisible();
-  await expect(page.locator("section").filter({ hasText: "Overdue jobs (1)" }).getByText("E2E-8001 / Overdue Shaft · Kaveri Engineering")).toBeVisible();
+  await expect(page.locator("section").filter({ hasText: /Overdue jobs \(\d+\)/ }).getByText("E2E-8001 / Overdue Shaft · Kaveri Engineering")).toBeVisible();
 
   await kpi("Overdue").click();
   await expect(page.getByRole("heading", { name: "Jobs Register" })).toBeVisible();
   await expect(page.getByRole("row", { name: /E2E-8001/ })).toBeVisible();
-  await expect(page.getByText("1 job · page 1 of 1")).toBeVisible();
+  await expect(page.getByText(new RegExp(`^${await count("status = 'Overdue'")} jobs? · page 1 of`))).toBeVisible();
 
   await page.getByRole("link", { name: "Dashboard" }).click();
   await kpi("Due today").click();

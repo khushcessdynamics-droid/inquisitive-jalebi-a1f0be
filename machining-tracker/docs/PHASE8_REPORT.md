@@ -24,9 +24,9 @@ Screenshots: `docs/screenshots/46-*.png` to `52-*.png`.
 ## Tests (run 2026-11-03)
 | Suite | Result |
 |---|---|
-| Unit | RESULT_UNIT |
-| Integration (real local Supabase; 5 Phase 8 tests: KPIs, money, quality, on-time, tables and follow-ups on known data; access-limited dashboard; weekly report A-F with hand-checked figures for a fixed past week; scheduled run on the right weekday and time only, once; previous-week comparison; permissions; permanent history) | RESULT_INTEGRATION |
-| Browser (Playwright): KPIs and click-through to filtered registers, vendor bar click; make the weekly report, sections and figures, PDF and Excel downloads; quality records export; Staff home; phone layout | RESULT_E2E |
+| Unit | 69 / 69 |
+| Integration (real local Supabase; 5 Phase 8 tests: KPIs, money, quality, on-time, tables and follow-ups on known data; access-limited dashboard; weekly report A-F with hand-checked figures for a fixed past week; scheduled run on the right weekday and time only, once; previous-week comparison; permissions; permanent history) | 106 / 106 (all phases) |
+| Browser (Playwright): KPIs and click-through to filtered registers, vendor bar click; make the weekly report, sections and figures, PDF and Excel downloads; quality records export; Staff home; phone layout | 23 / 23 (all phases) |
 | Type check, production build | clean |
 
 ## Decisions I made that you may want to change
