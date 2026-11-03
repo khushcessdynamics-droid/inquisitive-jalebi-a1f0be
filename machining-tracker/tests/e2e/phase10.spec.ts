@@ -176,3 +176,29 @@ test("repeated failed sign-ins: the sign-in page explains the block", async ({ p
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByText("Too many sign-in attempts. Please wait a few minutes and try again.")).toBeVisible();
 });
+
+test("Admin resets a Manager's authenticator (lost phone); the Manager must set up a new one", async ({ page, browser }) => {
+  await login(page, emails.admin);
+  await page.getByRole("link", { name: "Users", exact: true }).click();
+  await page.getByRole("button", { name: `Actions for ${emails.manager}` }).click();
+  await page.getByRole("button", { name: "Reset authenticator" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText(/lost or replaced their phone/)).toBeVisible();
+  await dialog.getByLabel("Reason (saved in the activity history)").fill("Phone lost, confirmed by call");
+  await dialog.getByRole("button", { name: "Reset authenticator" }).click();
+  await expect(page.getByText(/authenticator of .* was reset/)).toBeVisible();
+  expect((await sql("select 1 from auth.mfa_factors where user_id = $1", [ids.manager])).length).toBe(0);
+  // the Admin's own row offers no reset
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: `Actions for ${emails.admin}` }).click();
+  await expect(page.getByRole("button", { name: "Reset authenticator" })).toHaveCount(0);
+
+  const context = await browser.newContext();
+  const m = await context.newPage();
+  await m.goto("/login");
+  await m.getByLabel("Email").fill(emails.manager);
+  await m.getByLabel("Password").fill(PASSWORD);
+  await m.getByRole("button", { name: "Sign in" }).click();
+  await expect(m.getByRole("heading", { name: "Set up two-factor authentication" })).toBeVisible();
+  await context.close();
+});

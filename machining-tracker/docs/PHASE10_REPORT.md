@@ -25,8 +25,8 @@ that prove them in **`docs/SECURITY_TEST_REPORT.md`**. New in this phase:
 | Suite | Result |
 |---|---|
 | Unit | 81 / 81 |
-| Integration (real local Supabase, all phases) | 121 / 121 |
-| Browser (Playwright, all phases) | 28 / 28 |
+| Integration (real local Supabase, all phases) | 126 / 126 |
+| Browser (Playwright, all phases) | 29 / 29 |
 | Production build served like Cloudflare | 3 / 3 |
 | Type check | clean |
 | GitHub Actions CI on the pull request | green (both jobs) |
@@ -42,6 +42,7 @@ that prove them in **`docs/SECURITY_TEST_REPORT.md`**. New in this phase:
 | Edge Function relied on the platform JWT check | Supabase warns it breaks with the new signing keys | The function checks every caller itself; forged tokens tested |
 | Edit windows reloaded when someone else saved the same record | Unsaved typing was silently replaced (no data was overwritten, but work was lost without notice; found by the two-tab test) | The job, vendor assignment, vendor, requirement and quotation edit windows keep the typing, show "Changed by someone else", and send the version the user started from so the server refuses the save |
 | WhatsApp template "Saved." vanished at once | The Admin could not tell the save worked | The editor keeps its message |
+| The Jobs Register worked out quantities with one extra lookup per job | With 5,000 jobs the register's first page took 0.24 s and the dashboard about 1 s (slower again on the free server) | Quantities are calculated inside the same query: 0.07 s and 0.7 s, every row identical (checked column by column on 5,000 jobs) |
 | Catch-all `_redirects` rule | On Cloudflare it would also apply to real files | Removed; Pages serves the app for unknown paths itself |
 | Three browser tests depended on timing | Random failures | Exact link names |
 
@@ -69,7 +70,7 @@ that prove them in **`docs/SECURITY_TEST_REPORT.md`**. New in this phase:
 | # | Item | Where | Status |
 |---|---|---|---|
 | 1–3 | Source code, frontend, backend | `machining-tracker/`: `apps/web` (React), database functions in `supabase/migrations`, Edge Function `supabase/functions/admin-users` | Done |
-| 4–5 | PostgreSQL schema and migrations | `supabase/migrations` (11 files); `DATABASE_SECURITY.md` | Done |
+| 4–5 | PostgreSQL schema and migrations | `supabase/migrations` (13 files); `DATABASE_SECURITY.md` | Done |
 | 6–7 | Multi-user sign-in, role permissions | Supabase Auth with MFA; `SECURITY.md`, `PERMISSION_MATRIX.md` | Done |
 | 8 | Cloud deployment configuration | `DEPLOYMENT.md`, `.github/workflows/`, generated `_headers` | Prepared; **deployment needs your accounts** |
 | 9–17 | Excel import/export, dashboard, job tracking, vendors, commitment history, reliability, cost comparison, returns and quality, payments | Phases 4–8 reports and rule documents | Done |
@@ -95,5 +96,6 @@ that prove them in **`docs/SECURITY_TEST_REPORT.md`**. New in this phase:
 ## Decisions for you
 
 1. **Make the GitHub repository private** (recommended; it is public today).
-2. **Lost authenticator:** today an Admin resets it with one SQL command in the Supabase dashboard (`ADMIN_SECURITY_GUIDE.md`). I can
-   add a "Reset authenticator" button for Admins (Edge Function, MFA-protected, recorded in the history) if you want it in the app.
+2. **Lost authenticator:** added as **Users → Reset authenticator** (Admin with MFA only, reason required, the person is signed
+   out at once and must set up a new authenticator; recorded in the history; tested in the database and the browser). Tell me if
+   you would rather not have it and it will be removed.

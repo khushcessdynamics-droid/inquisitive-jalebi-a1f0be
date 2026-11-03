@@ -44,12 +44,16 @@ it to be slower):
 
 | Screen | Time |
 |---|---|
-| Jobs Register, first page with the total count | 0.24 s |
-| Search by part | 0.04 s |
-| Excel export of all 5,000 jobs (data) | 0.20 s |
-| Dashboard (all figures, charts and tables) | 1.3 s |
-| Weekly report (made automatically in the background) | 1.6 s |
-| Vendor reliability / payments by vendor / activity history | under 0.2 s each |
+| Jobs Register, first page with the total count | 0.07 s |
+| Search by part | 0.05 s |
+| Excel export of all 5,000 jobs (data) | 0.15 s |
+| Dashboard (all figures, charts and tables) | 0.7 s |
+| Weekly report (made automatically in the background) | 1.3 s |
+| Vendor reliability / payments by vendor / activity history | under 0.15 s each |
+
+The register, dashboard and report were made faster after the first measurement (the quantities in the Jobs Register are now
+worked out in the same database query instead of one extra lookup per job): register first page 0.24 s → 0.07 s, dashboard
+0.9–1.3 s → 0.7 s, with identical figures.
 
 ## When the free plan is no longer enough
 

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FunctionsHttpError } from "@supabase/supabase-js";
-import { KeyRound, LogOut, MoreHorizontal, Pencil, ShieldCheck, UserCheck, UserPlus, UserX } from "lucide-react";
+import { KeyRound, LogOut, MoreHorizontal, Pencil, ShieldCheck, Smartphone, UserCheck, UserPlus, UserX } from "lucide-react";
 import { formatDateTimeIST, type RoleKey } from "@cess/shared";
 import { useAuth } from "../../auth/AuthProvider";
 import { supabase } from "../../lib/supabase";
@@ -64,6 +64,8 @@ export function UsersPage() {
   const [editing, setEditing] = useState<AdminUserRow | null>(null);
   const [toggling, setToggling] = useState<AdminUserRow | null>(null);
   const [revoking, setRevoking] = useState<AdminUserRow | null>(null);
+  const [mfaResetting, setMfaResetting] = useState<AdminUserRow | null>(null);
+  const [mfaResetDone, setMfaResetDone] = useState<string | null>(null);
   const [resetting, setResetting] = useState<AdminUserRow | null>(null);
   const [overridesFor, setOverridesFor] = useState<AdminUserRow | null>(null);
   const [menuFor, setMenuFor] = useState<string | null>(null);
@@ -79,6 +81,13 @@ export function UsersPage() {
           </Button>
         }
       />
+      {mfaResetDone && (
+        <div className="mb-3">
+          <Alert tone="success" onClose={() => setMfaResetDone(null)}>
+            {mfaResetDone}
+          </Alert>
+        </div>
+      )}
       {users.isLoading ? (
         <Spinner />
       ) : users.error ? (
@@ -128,6 +137,7 @@ export function UsersPage() {
                         { label: "Permission exceptions", icon: ShieldCheck, onClick: () => setOverridesFor(u), show: u.role_key !== "admin" },
                         { label: "Password reset link", icon: KeyRound, onClick: () => setResetting(u), show: u.is_active },
                         { label: "End all sessions", icon: LogOut, onClick: () => setRevoking(u), show: u.active_sessions > 0 },
+                        { label: "Reset authenticator", icon: Smartphone, onClick: () => setMfaResetting(u), show: u.mfa_enabled && u.id !== access?.user_id },
                         { label: u.is_active ? "Deactivate" : "Reactivate", icon: u.is_active ? UserX : UserCheck, onClick: () => setToggling(u), show: u.id !== access?.user_id },
                       ]
                         .filter((a) => a.show)
@@ -216,6 +226,21 @@ export function UsersPage() {
         onConfirm={async (reason) => {
           unwrap(await supabase.rpc("admin_revoke_sessions", { p_user_id: revoking!.id, p_reason: reason }));
           setRevoking(null);
+          await refresh();
+        }}
+      />
+
+      <ReasonDialog
+        open={!!mfaResetting}
+        title="Reset authenticator?"
+        message={`Use this when ${mfaResetting?.full_name || mfaResetting?.email} has lost or replaced their phone. Their authenticator app is removed and they are signed out on every device. At their next sign-in they must set up a new one${mfaResetting && (mfaResetting.role_key === "admin" || mfaResetting.role_key === "manager") ? " (mandatory for their role)" : ""}. First confirm that the request really comes from them, for example by calling them.`}
+        confirmLabel="Reset authenticator"
+        danger
+        onCancel={() => setMfaResetting(null)}
+        onConfirm={async (reason) => {
+          unwrap(await supabase.rpc("admin_reset_mfa", { p_user_id: mfaResetting!.id, p_reason: reason }));
+          setMfaResetDone(`The authenticator of ${mfaResetting!.full_name || mfaResetting!.email} was reset. They set up a new one at their next sign-in.`);
+          setMfaResetting(null);
           await refresh();
         }}
       />

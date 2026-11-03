@@ -17,6 +17,7 @@ export const ACTION_LABELS: Record<string, string> = {
   "user.deactivated": "User deactivated",
   "user.reactivated": "User reactivated",
   "user.sessions_revoked": "Sessions ended by Admin",
+  "user.mfa_reset": "Authenticator reset by Admin",
   "user.bootstrap_admin": "First Admin created",
   "permission.granted": "Role permission granted",
   "permission.revoked": "Role permission revoked",

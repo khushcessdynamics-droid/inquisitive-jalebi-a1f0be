@@ -66,7 +66,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   writeFileSync("capacity-result.json", JSON.stringify(result, null, 2));
-  await resetLocalDatabase(); // remove every measurement record
+  // remove every measurement record (CAPACITY_KEEP=1 keeps them for profiling on a developer PC; reset afterwards)
+  if (process.env.CAPACITY_KEEP !== "1") await resetLocalDatabase();
   await closeSql();
 }, 300_000);
 

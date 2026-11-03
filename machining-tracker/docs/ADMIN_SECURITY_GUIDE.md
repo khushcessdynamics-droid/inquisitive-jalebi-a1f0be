@@ -24,10 +24,13 @@ For the people with the **Admin** role. Who may do what: `docs/PERMISSION_MATRIX
 | Someone leaves or must stop at once | Users → the person → **Deactivate** | Works immediately, even if they are signed in at that moment. Their records and history stay |
 | Sign someone out everywhere (e.g. a shared computer) | Users → the person → **End all sessions** | They can sign in again normally |
 | Forgotten password | Users → the person → **Password reset link** → **Copy link** | Or they use "Forgot password" on the sign-in page |
-| Lost phone / authenticator | Supabase dashboard → **SQL Editor**, run the command below with their email. At their next sign-in the app asks them to set up a new authenticator | Do this only after confirming who is asking (call them). It is recorded in Supabase's sign-in log |
+| Lost or replaced phone (authenticator) | Users → the person → **Reset authenticator** → reason → confirm | First confirm who is asking (call them). Their authenticator is removed and they are signed out everywhere; at their next sign-in they set up a new one (mandatory for Admin and Manager). Recorded in the activity history. An Admin cannot reset their own: another Admin does it |
+
+**The last Admin lost their own phone** (no other Admin to press the button): Supabase dashboard → **SQL Editor**, run this with
+your email, then sign in and set up the new authenticator. Afterwards, invite a second Admin.
 
 ```sql
-delete from auth.mfa_factors where user_id = (select id from auth.users where email = 'person@cess.co.in');
+delete from auth.mfa_factors where user_id = (select id from auth.users where email = 'your.name@cess.co.in');
 ```
 
 ## Settings that protect the system (Settings page)
