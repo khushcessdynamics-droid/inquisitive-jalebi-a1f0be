@@ -146,7 +146,7 @@ export function ReliabilityPage() {
               <li>Only <strong>vendor-caused</strong> cancellations count, once, in the cancellation factor. Other cancellations and open jobs are excluded.</li>
               <li>
                 No score below {s.min_eligible_jobs} eligible jobs or with fewer than {s.min_factors} factors. Factors without data are left out and the other weights scaled up to 100%. Quality
-                comes from inspections (Phase 6).
+                = accepted ÷ inspected pieces on returned jobs (rework counts as not accepted).
               </li>
               <li>
                 Labels: {s.labels.excellent}+ Excellent · {s.labels.good}+ Good · {s.labels.average}+ Average · below {s.labels.average} Needs Improvement. Weights are changed in Settings.

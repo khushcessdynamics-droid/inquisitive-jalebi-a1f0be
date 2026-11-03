@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, CalendarCheck, CalendarClock, Pencil, Send, Shuffle, Archive } from "lucide-react";
+import { ArrowRight, CalendarCheck, CalendarClock, CheckCircle2, Pencil, RotateCcw, Send, Shuffle, Archive } from "lucide-react";
 import { formatDate, formatDateTimeIST, formatINR } from "@cess/shared";
 import { useAuth } from "../../auth/AuthProvider";
 import { supabase } from "../../lib/supabase";
@@ -12,6 +12,8 @@ import { useDateFormat, useRealtimeInvalidate } from "../../hooks/data";
 import { DateText, DueText, Money, SourceBadge, StatusBadge } from "../../components/jobs";
 import { AttachmentsCard } from "../../components/Attachments";
 import { CommitmentTimeline, ReviseCommitmentDialog, RevisionBadge, useCommitmentHistory, useRevisionLimit } from "../../components/commitments";
+import { ReturnsCard } from "../../components/returns";
+import { PaymentsCard } from "../../components/payments";
 import { CancelForwardDialog, EditAssignmentDialog, EditJobDialog, ReclassifyDialog, SendToVendorDialog } from "../../components/jobForms";
 import { Alert, Badge, Button, Card, PageHeader, ReasonDialog, Spinner, cx } from "../../components/ui";
 
@@ -33,7 +35,7 @@ export function JobDetailPage() {
   const { access, can } = useAuth();
   const dateFormat = useDateFormat();
   const qc = useQueryClient();
-  useRealtimeInvalidate(["jobs", "job_assignments"], ["job", id]);
+  useRealtimeInvalidate(["jobs", "job_assignments", "material_returns", "quality_inspections"], ["job", id]);
   useRealtimeInvalidate(["job_assignments"], ["job-assignments", id]);
 
   const job = useQuery({
@@ -68,7 +70,7 @@ export function JobDetailPage() {
 
   const history = useCommitmentHistory(id);
   const revisionLimit = useRevisionLimit();
-  const [dialog, setDialog] = useState<null | "edit" | "send" | "assignment" | "cancel" | "archive" | "revise">(null);
+  const [dialog, setDialog] = useState<null | "edit" | "send" | "assignment" | "cancel" | "archive" | "revise" | "close" | "reopen">(null);
   const [reclassify, setReclassify] = useState<AssignmentWithNames | null>(null);
 
   if (job.isLoading) return <Spinner />;
@@ -122,6 +124,16 @@ export function JobDetailPage() {
                   <Shuffle className="h-4 w-4" /> Cancel / forward vendor
                 </Button>
               )}
+              {open && !j.closed_at && can("jobs.edit") && j.qty_received > 0 && (
+                <Button variant="secondary" onClick={() => setDialog("close")}>
+                  <CheckCircle2 className="h-4 w-4" /> Close job
+                </Button>
+              )}
+              {j.closed_at && can("jobs.edit") && (
+                <Button variant="secondary" onClick={() => setDialog("reopen")}>
+                  <RotateCcw className="h-4 w-4" /> Reopen job
+                </Button>
+              )}
               {!open && can("jobs.archive") && (
                 <Button variant="ghost" onClick={() => setDialog("archive")}>
                   <Archive className="h-4 w-4" /> Archive
@@ -144,7 +156,9 @@ export function JobDetailPage() {
               <DateText value={j.current_commitment_date} format={dateFormat} empty="Not recorded" />
               {j.revision_count > 0 && <> <RevisionBadge count={j.revision_count} limit={revisionLimit} /></>}
             </Fact>
-            <Fact label="Actual return"><DateText value={j.return_date} format={dateFormat} empty="Not returned" /></Fact>
+            <Fact label="Actual return (final)">
+              <DateText value={j.return_date} format={dateFormat} empty={j.qty_received > 0 ? `${j.qty_received} pcs back so far` : "Not returned"} />
+            </Fact>
             <Fact label="Days since given">{j.days_since_given ?? "—"}</Fact>
             <Fact label="Remaining days">{j.remaining_days !== null && j.remaining_days >= 0 ? j.remaining_days : "—"}</Fact>
             <Fact label="Delay vs original commitment">{j.delay_days !== null ? `${j.delay_days} day${j.delay_days === 1 ? "" : "s"}` : "—"}</Fact>
@@ -167,6 +181,14 @@ export function JobDetailPage() {
           </dl>
         </Card>
       </div>
+
+      <Card className="mt-4" title="Material returns and quality inspection">
+        {assignments.isLoading ? (
+          <Spinner />
+        ) : (
+          <ReturnsCard jobId={j.id} assignments={assignments.data ?? []} jobClosed={!!j.closed_at || !!j.archived_at} dateFormat={dateFormat} />
+        )}
+      </Card>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <Card title={`Vendor journey (${assignments.data?.length ?? 0})`} className="lg:col-span-2">
@@ -227,6 +249,12 @@ export function JobDetailPage() {
         </Card>
         <AttachmentsCard jobId={j.id} assignmentId={open?.id ?? null} />
       </div>
+
+      {can("payments.view") && (
+        <Card className="mt-4" title="Payments">
+          {assignments.isLoading ? <Spinner /> : <PaymentsCard jobId={j.id} assignments={assignments.data ?? []} dateFormat={dateFormat} archived={!!j.archived_at} />}
+        </Card>
+      )}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <Card title="Commitment timeline" className="lg:col-span-2">
@@ -296,6 +324,35 @@ export function JobDetailPage() {
       )}
       {open && <CancelForwardDialog job={j} assignment={open} vendorName={open.vendor?.name ?? ""} open={dialog === "cancel"} onClose={() => setDialog(null)} />}
       {reclassify && <ReclassifyDialog assignmentId={reclassify.id} version={reclassify.version} jobId={j.id} open onClose={() => setReclassify(null)} />}
+      <ReasonDialog
+        open={dialog === "close"}
+        title="Close this job?"
+        message={
+          <>
+            Use this when the job will not complete by itself: rejected pieces accepted as final, remaining pieces not needed, or the quantity was never recorded.
+            {j.qty_with_vendor ? <strong> {j.qty_with_vendor} pieces are still with the vendor.</strong> : null} The last return date becomes the completion date.
+          </>
+        }
+        confirmLabel="Close job"
+        onCancel={() => setDialog(null)}
+        onConfirm={async (reason) => {
+          unwrap(await supabase.rpc("close_job", { p_job_id: j.id, p_expected_version: j.version, p_reason: reason }));
+          setDialog(null);
+          await Promise.all([["job", id], ["job-assignments", id], ["job-activity", id], ["returns", id], ["jobs"]].map((queryKey) => qc.invalidateQueries({ queryKey })));
+        }}
+      />
+      <ReasonDialog
+        open={dialog === "reopen"}
+        title="Reopen this job?"
+        message="The last vendor assignment becomes open again so returns and inspections can be corrected. Everything recorded so far is kept."
+        confirmLabel="Reopen job"
+        onCancel={() => setDialog(null)}
+        onConfirm={async (reason) => {
+          unwrap(await supabase.rpc("reopen_job", { p_job_id: j.id, p_expected_version: j.version, p_reason: reason }));
+          setDialog(null);
+          await Promise.all([["job", id], ["job-assignments", id], ["job-activity", id], ["returns", id], ["jobs"]].map((queryKey) => qc.invalidateQueries({ queryKey })));
+        }}
+      />
       <ReasonDialog
         open={dialog === "archive"}
         title="Archive this job?"

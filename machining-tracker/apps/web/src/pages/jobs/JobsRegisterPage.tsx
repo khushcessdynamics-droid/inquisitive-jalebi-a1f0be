@@ -15,12 +15,14 @@ import { RevisionBadge, useRevisionLimit } from "../../components/commitments";
 import { Alert, Button, Card, EmptyState, Field, Input, PageHeader, Select, Spinner, Table, cx, td, th } from "../../components/ui";
 
 const PAGE_SIZE = 25;
-const OPEN = ["Sent to Vendor", "In Progress", "Due Soon", "Due Today", "Overdue", "Commitment Date Missing"];
+const OPEN = ["Sent to Vendor", "In Progress", "Due Soon", "Due Today", "Overdue", "Commitment Date Missing", "Partially Returned", "Quality Inspection Pending"];
 
 const TABS: Array<{ key: string; label: string; statuses?: string[]; archived?: boolean }> = [
   { key: "open", label: "Open", statuses: OPEN },
   { key: "overdue", label: "Overdue", statuses: ["Overdue"] },
   { key: "due", label: "Due today / soon", statuses: ["Due Today", "Due Soon"] },
+  { key: "partial", label: "Partially returned", statuses: ["Partially Returned"] },
+  { key: "inspection", label: "Inspection pending", statuses: ["Quality Inspection Pending"] },
   { key: "missing", label: "No commitment date", statuses: ["Commitment Date Missing"] },
   { key: "draft", label: "Drafts", statuses: ["Draft"] },
   { key: "completed", label: "Completed", statuses: ["Completed"] },
@@ -94,8 +96,8 @@ export function JobsRegisterPage() {
     setParams(next, { replace: true });
   };
 
-  useRealtimeInvalidate(["jobs", "job_assignments"], ["jobs"]);
-  useRealtimeInvalidate(["jobs", "job_assignments"], ["job-tab-counts"]);
+  useRealtimeInvalidate(["jobs", "job_assignments", "material_returns", "quality_inspections"], ["jobs"]);
+  useRealtimeInvalidate(["jobs", "job_assignments", "material_returns", "quality_inspections"], ["job-tab-counts"]);
 
   const list = useQuery({
     queryKey: ["jobs", f, page, sort, dir],
@@ -150,6 +152,10 @@ export function JobsRegisterPage() {
           { header: "Original Commitment Date", value: (r) => r.original_commitment_date, format: "date" },
           { header: "Current Commitment Date", value: (r) => r.current_commitment_date, format: "date" },
           { header: "Commitment Revisions", value: (r) => r.revision_count, format: "int" },
+          { header: "Qty Returned", value: (r) => r.qty_received, format: "int" },
+          { header: "Qty Accepted", value: (r) => r.qty_accepted, format: "int" },
+          { header: "Qty Rejected", value: (r) => r.qty_rejected, format: "int" },
+          { header: "Qty With Vendor", value: (r) => r.qty_with_vendor, format: "int" },
           { header: "Actual Return Date", value: (r) => r.return_date, format: "date" },
           { header: "Quantity Sent", value: (r) => r.qty_sent, format: "int" },
           { header: "Job Amount (₹)", value: (r) => r.amount, format: "inr" },
@@ -323,6 +329,12 @@ export function JobsRegisterPage() {
                       <div>
                         <DueText remaining={r.remaining_days} delay={r.status === "Overdue" ? r.delay_days_current : null} />
                       </div>
+                      {r.qty_received > 0 && r.assignment_state === "open" && (
+                        <p className="text-xs text-slate-500">
+                          {r.qty_received}
+                          {r.assignment_qty ? ` of ${r.assignment_qty}` : ""} back{r.qty_awaiting_inspection ? ` · ${r.qty_awaiting_inspection} to inspect` : ""}
+                        </p>
+                      )}
                     </td>
                     <td className={`${td} min-w-44 max-w-xs`}>
                       <p className="font-medium">{r.part_label}</p>

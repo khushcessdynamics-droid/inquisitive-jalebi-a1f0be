@@ -75,6 +75,10 @@ export interface ReliabilityRow {
     avg_days_taken: number | null;
     quality_acceptance_pct: number | null;
     rework_rejection_pct: number | null;
+    pieces_inspected?: number;
+    pieces_accepted?: number;
+    pieces_rejected?: number;
+    pieces_rework?: number;
     revisions: number;
     revisions_vendor: number;
     revisions_per_committed_job: number | null;
@@ -127,6 +131,10 @@ export interface ReliabilityJob {
   vendor_revisions: number;
   overdue_now: boolean;
   category_median_days: number | null;
+  qty_inspected?: number;
+  qty_accepted?: number;
+  qty_rejected?: number;
+  qty_rework?: number;
   used_in: ReliabilityFactor[];
   excluded_because: string | null;
 }

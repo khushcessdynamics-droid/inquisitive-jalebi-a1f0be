@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
-import { formatDate, recentFinancialYears, todayIST } from "@cess/shared";
+import { formatDate, formatINR, recentFinancialYears, todayIST } from "@cess/shared";
 import { useAuth } from "../../auth/AuthProvider";
 import { supabase } from "../../lib/supabase";
 import { toAppError, unwrap } from "../../lib/errors";
@@ -13,6 +13,7 @@ import { Alert, Badge, Button, Card, EmptyState, PageHeader, Spinner, Table, td,
 import { VendorDialog } from "./VendorsPage";
 import { CancellationList, MeasureGrid, ReliabilityDetail, ScoreCell, plural, useReliability } from "../../components/reliability";
 import type { CommitmentRevisionRow, ReliabilityRow } from "../../lib/phase5Types";
+import { StatementDialog } from "../../components/vendorStatement";
 
 interface Summary {
   assignments: number;
@@ -60,6 +61,15 @@ export function VendorDetailPage() {
   const overall = useReliability({ vendor_id: id, fy: scoreFy || undefined }, canScore);
   const perCategory = useReliability({ vendor_id: id, fy: scoreFy || undefined, by_category: true }, canScore);
   const [detail, setDetail] = useState<null | { categoryId?: string; name: string }>(null);
+  const [statement, setStatement] = useState(false);
+  const payments = useQuery({
+    queryKey: ["payment-summary", "vendor", id],
+    enabled: can("payments.view"),
+    queryFn: async () =>
+      ((unwrap(await supabase.rpc("vendor_payment_summary", { p: {} })) as Array<{ vendor_id: string; total_payable: number; amount_paid: number; outstanding: number; accounts: number }>).find(
+        (r) => r.vendor_id === id,
+      ) ?? null),
+  });
   const revisions = useQuery({
     queryKey: ["vendor-revisions", id],
     queryFn: async () => unwrap(await supabase.from("commitment_history").select("*").eq("vendor_id", id).order("created_at", { ascending: false }).limit(50)) as CommitmentRevisionRow[],
@@ -117,6 +127,31 @@ export function VendorDetailPage() {
           <Stat label="Business (excl. cancelled)" value={new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(s.business_amount)} />
         </div>
       )}
+      {can("payments.view") && (
+        <Card
+          className="mb-4"
+          title="Payments"
+          actions={
+            <Button variant="secondary" onClick={() => setStatement(true)}>
+              Payment statement
+            </Button>
+          }
+        >
+          {payments.isLoading ? (
+            <Spinner />
+          ) : !payments.data ? (
+            <p className="text-sm text-slate-600">No job amounts or payments recorded for this vendor.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <Stat label="Total payable" value={formatINR(payments.data.total_payable)} />
+              <Stat label="Total paid" value={formatINR(payments.data.amount_paid)} />
+              <Stat label="Outstanding" value={formatINR(payments.data.outstanding)} tone={payments.data.outstanding > 0 ? "text-red-700" : undefined} />
+              <Stat label="Job accounts" value={payments.data.accounts} />
+            </div>
+          )}
+        </Card>
+      )}
+      {statement && <StatementDialog vendorId={id} vendorName={vendor.name} dateFormat={dateFormat} onClose={() => setStatement(false)} />}
       {canScore && (
         <Card
           className="mb-4"

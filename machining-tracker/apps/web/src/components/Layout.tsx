@@ -1,6 +1,6 @@
 import { useState, type ComponentType } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Activity, ClipboardList, Cog, Factory, FileSpreadsheet, Gauge, HeartPulse, Home, ListChecks, LogOut, Menu, PlusCircle, Scale, ShieldCheck, UserCircle, Users, X } from "lucide-react";
+import { Activity, ClipboardList, Cog, Factory, FileSpreadsheet, Gauge, IndianRupee, HeartPulse, Home, ListChecks, LogOut, Menu, PlusCircle, Scale, ShieldCheck, UserCircle, Users, X } from "lucide-react";
 import type { PermissionKey } from "@cess/shared";
 import { useAuth } from "../auth/AuthProvider";
 import { cx } from "./ui";
@@ -12,7 +12,7 @@ interface NavItem {
   anyOf?: PermissionKey[];
 }
 
-// Only modules that are fully working are listed. Later phases add Returns, Payments, WhatsApp, Dashboard.
+// Only modules that are fully working are listed. Later phases add WhatsApp, reminders and the dashboard.
 const NAV: NavItem[] = [
   { to: "/", label: "Home", icon: Home },
   { to: "/jobs", label: "Jobs Register", icon: ClipboardList, anyOf: ["jobs.view_all", "jobs.view_assigned"] },
@@ -20,6 +20,7 @@ const NAV: NavItem[] = [
   { to: "/vendors", label: "Vendors", icon: Factory, anyOf: ["vendors.view"] },
   { to: "/vendors/reliability", label: "Vendor Reliability", icon: Gauge, anyOf: ["reliability.view"] },
   { to: "/quotes", label: "Cost Comparison", icon: Scale, anyOf: ["costcompare.view"] },
+  { to: "/payments", label: "Payments", icon: IndianRupee, anyOf: ["payments.view"] },
   { to: "/jobs/review", label: "Missing Data", icon: ListChecks, anyOf: ["jobs.view_all", "jobs.view_assigned"] },
   { to: "/data", label: "Excel Import / Export", icon: FileSpreadsheet, anyOf: ["data.import", "reports.export"] },
   { to: "/admin/users", label: "Users", icon: Users, anyOf: ["users.manage"] },

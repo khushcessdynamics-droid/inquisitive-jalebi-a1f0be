@@ -124,6 +124,12 @@ export interface JobRegisterRow {
   long_pending: boolean | null;
   financial_year: string | null;
   revision_count: number;
+  qty_received: number;
+  qty_accepted: number;
+  qty_rejected: number;
+  qty_rework: number;
+  qty_awaiting_inspection: number;
+  qty_with_vendor: number | null;
 }
 
 export interface AssignmentRow {
@@ -146,6 +152,8 @@ export interface AssignmentRow {
   remarks: string;
   created_at: string;
   version: number;
+  invoice_no?: string | null;
+  invoice_date?: string | null;
 }
 
 export interface VendorRow {

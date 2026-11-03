@@ -4,7 +4,7 @@ Online, multi-user application for outsourced machining jobs and vendor manageme
 Free-first stack: **React + TypeScript + Vite + Tailwind** (static site on Cloudflare) and **Supabase Free**
 (PostgreSQL, Auth with MFA, Storage, Realtime, Edge Functions). Mandatory running cost: **₹0**.
 
-> Status: **Phases 3, 3B, 4 and 5 complete and tested locally. Not deployed yet.** See `docs/PHASE3_REPORT.md`, `docs/PHASE4_REPORT.md` and `docs/PHASE5_REPORT.md`.
+> Status: **Phases 3 to 6 complete and tested locally. Not deployed yet.** See `docs/PHASE3_REPORT.md` to `docs/PHASE6_REPORT.md`.
 
 ## What works today
 - Invitation-only accounts, sign-in, sign-out, sign out on all devices
@@ -32,7 +32,13 @@ Free-first stack: **React + TypeScript + Vite + Tailwind** (static site on Cloud
 - **Cost comparison**: quotations per requirement, lowest/highest/average and % differences, charts, a recommendation that is not
   price-only, manual choice and confirmed job creation, price history per vendor (`docs/RELIABILITY_RULES.md`)
 
-Returns, quality and payments (Phase 6), WhatsApp and reminders (Phase 7), dashboard and weekly reports (Phase 8) follow.
+- **Material returns and quality inspection**: partial returns, accepted / rejected / rework quantities, pieces still with the vendor,
+  automatic completion only when every piece is back and inspected, close or reopen with a reason, voids instead of edits
+- **Vendor payments**: invoice, advances, payments, additional charges and discounts per vendor; total payable, balance and status;
+  reversals instead of edits; pending payments, vendor-wise totals, payment statements, monthly and FY payments
+  (`docs/RETURNS_AND_PAYMENTS.md`). Admin records payments; Managers view
+
+WhatsApp and reminders (Phase 7), dashboard and weekly reports (Phase 8) follow.
 
 ## Folder structure
 ```

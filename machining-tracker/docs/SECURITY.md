@@ -53,9 +53,10 @@ Supabase API gateway ──► PostgREST ──► PostgreSQL (Row Level Securit
 | Cancel jobs; change/forward vendor; revise commitments | ✔ | ✔ | — |
 | View vendors | ✔ | ✔ | ✔ |
 | Manage vendors, quotations; view reliability & cost comparison | ✔ | ✔ | — |
-| Record returns; quality inspections | ✔ | ✔ | — (returns can be granted) |
+| Record returns; quality inspections; close / reopen jobs (with reason) | ✔ | ✔ | — (returns can be granted) |
 | **View payments** | ✔ | ✔ | — |
-| **Add payments / adjust or reverse payments** | ✔ | — (grantable) | — |
+| **Add payments, record invoices, charges and discounts** (payments.add) | ✔ | — (grantable) | — |
+| **Reverse payments / change a recorded invoice amount** (payments.manage) | ✔ | — (grantable) | — |
 | WhatsApp click-to-chat | ✔ | ✔ | — (grantable) |
 | Attachments upload/download | ✔ | ✔ | ✔ (on permitted jobs) |
 | Reports view/export | ✔ | ✔ | — |

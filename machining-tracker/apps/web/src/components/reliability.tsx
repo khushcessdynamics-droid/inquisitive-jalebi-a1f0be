@@ -150,8 +150,8 @@ export function MeasureGrid({ row }: { row: ReliabilityRow }) {
       <Measure label="Overdue now" value={`${c.overdue_now} of ${c.open_committed}`} hint={m.overdue_now_pct === null ? "no open jobs with a date" : `${pct(m.overdue_now_pct)} of open jobs`} />
       <Measure label="Commitment revisions" value={`${m.revisions} (${m.revisions_vendor} by vendor)`} hint={`${m.revised_jobs} of ${m.committed_jobs} jobs revised${m.frequent_reviser ? " · frequent" : ""}`} />
       <Measure label="Average completion time" value={days(m.avg_days_taken)} hint="date given to return" />
-      <Measure label="Quality acceptance" value={pct(m.quality_acceptance_pct)} hint="from inspections (Phase 6)" />
-      <Measure label="Rework / rejection" value={pct(m.rework_rejection_pct)} hint="from inspections (Phase 6)" />
+      <Measure label="Quality acceptance" value={pct(m.quality_acceptance_pct)} hint={m.pieces_inspected ? `${m.pieces_accepted} of ${m.pieces_inspected} inspected pieces` : "no inspected pieces yet"} />
+      <Measure label="Rework / rejection" value={pct(m.rework_rejection_pct)} hint={m.pieces_inspected ? `${m.pieces_rejected} rejected, ${m.pieces_rework} rework` : "no inspected pieces yet"} />
     </div>
   );
 }

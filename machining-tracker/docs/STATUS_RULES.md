@@ -6,9 +6,14 @@ stored, so a job becomes "Overdue" automatically the day after its committed dat
 ## Status (first matching rule wins)
 | Status | Rule |
 |---|---|
-| Completed | The job was closed with a recorded reason (from Phase 6: after material return and inspection; today only imported historical jobs) |
+| Completed | Every piece sent is back and inspected (accepted or rejected), or an authorised user closed the job with a reason. Imported historical jobs are completed with a note |
 | Draft | Saved but not yet given to any vendor |
 | Cancelled | Every vendor assignment was cancelled and the job was not forwarded |
+| *Once anything is returned:* | |
+| Overdue / Due Today | Pieces are still with the vendor (or the quantity is unknown) and the committed date has passed / is today |
+| Quality Inspection Pending | Returned pieces are waiting for inspection |
+| Partially Returned | Some pieces are back and inspected, the rest are still with the vendor (including pieces sent back for rework), or the quantity is unknown |
+| *Nothing returned yet:* | |
 | Commitment Date Missing | With a vendor, but no committed delivery date recorded (no reminders, excluded from on-time scoring) |
 | Overdue | Current committed date is before today |
 | Due Today | Current committed date is today |
@@ -16,11 +21,12 @@ stored, so a job becomes "Overdue" automatically the day after its committed dat
 | Sent to Vendor | Given to the vendor today (or tomorrow) |
 | In Progress | With the vendor, not yet due |
 
-Phase 6 adds **Partially Returned** and **Quality Inspection Pending** from real return and inspection records.
+A return date alone never completes a job: completion needs the quantities and inspections (rules: `docs/RETURNS_AND_PAYMENTS.md`).
 
 ## Numbers
 | Field | Calculation |
 |---|---|
+| Returned / with vendor / awaiting inspection | from the return and inspection records of the current vendor (Register and job page) |
 | Days since given ("Days Taken" in the Excel tracker) | (return date, cancellation date, or today) minus date given to the current vendor |
 | Remaining days | current committed date minus today (open jobs) |
 | Delay vs original | days after the **original** commitment (today for open jobs, return date for completed); never negative |

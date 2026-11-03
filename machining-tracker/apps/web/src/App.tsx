@@ -28,6 +28,7 @@ const ReliabilityPage = lazy(() => import("./pages/vendors/ReliabilityPage").the
 const QuotesPage = lazy(() => import("./pages/quotes/QuotesPage").then((m) => ({ default: m.QuotesPage })));
 const QuoteDetailPage = lazy(() => import("./pages/quotes/QuoteDetailPage").then((m) => ({ default: m.QuoteDetailPage })));
 const PriceHistoryPage = lazy(() => import("./pages/quotes/PriceHistoryPage").then((m) => ({ default: m.PriceHistoryPage })));
+const PaymentsPage = lazy(() => import("./pages/payments/PaymentsPage").then((m) => ({ default: m.PaymentsPage })));
 const ImportExportPage = lazy(() => import("./pages/data/ImportExportPage").then((m) => ({ default: m.ImportExportPage })));
 
 function RequireSession({ children }: { children: ReactNode }) {
@@ -131,6 +132,7 @@ export function App() {
         <Route path="vendors/:id" element={<RequirePermission anyOf={["vendors.view"]}><VendorDetailPage /></RequirePermission>} />
         <Route path="quotes" element={<RequirePermission anyOf={["costcompare.view"]}><QuotesPage /></RequirePermission>} />
         <Route path="quotes/history" element={<RequirePermission anyOf={["costcompare.view"]}><PriceHistoryPage /></RequirePermission>} />
+        <Route path="payments" element={<RequirePermission anyOf={["payments.view"]}><PaymentsPage /></RequirePermission>} />
         <Route path="quotes/:id" element={<RequirePermission anyOf={["costcompare.view"]}><QuoteDetailPage /></RequirePermission>} />
         <Route path="data" element={<RequirePermission anyOf={["data.import", "reports.export"]}><ImportExportPage /></RequirePermission>} />
       </Route>

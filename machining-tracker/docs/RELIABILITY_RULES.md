@@ -33,7 +33,7 @@ Business dates are Indian dates (Asia/Kolkata).
 | Factor | Weight | Score 0 to 100 | Jobs used |
 |---|---|---|---|
 | On-time delivery | 30 | returned on or before the **original** committed date ÷ returned jobs with a committed date | returned with a committed date |
-| Quality performance | 25 | accepted ÷ inspected pieces (from Phase 6 inspections) | **not available until Phase 6**: left out |
+| Quality performance | 25 | accepted ÷ inspected pieces, over every inspection on returned jobs (rework and rejected pieces count as not accepted; a reworked piece inspected again counts again) | returned jobs with at least one inspection. Jobs cancelled for a quality reason count only in the cancellation factor |
 | Delay performance | 15 | 100 × (1 − average days late ÷ delay cap 14), averaged over late jobs only; 100 if none was late | returned with a committed date |
 | Commitment stability | 10 | 100 × (1 − vendor-requested revisions per job ÷ revisions cap 2). Revisions requested by CESS are not counted | returned with a committed date |
 | Completion time | 10 | 100 × min(1, Σ category usual days ÷ Σ days taken). Usual days = median days of returned jobs in the same category across all vendors (needs 3 jobs from 2 vendors) | returned jobs whose category has a usual time |
@@ -46,7 +46,12 @@ are scaled up to 100%, shown as "Weight used" on the "How this score was calcula
 Labels: 85+ Excellent, 70+ Good, 50+ Average, below 50 Needs Improvement (editable).
 
 Shown beside the score, not scored again: on-time %, average delay when late (vs original and vs latest date), total delay days,
-overdue-now count and %, revisions (all / by vendor), average completion time, cancellations by reason.
+overdue-now count and %, revisions (all / by vendor), average completion time, quality acceptance % and rework/rejection %
+(with piece counts), cancellations by reason.
+
+A job counts as **returned** when its vendor assignment is completed: automatically when every piece is back and inspected, or
+when an authorised user closes it with a reason (`docs/RETURNS_AND_PAYMENTS.md`). The return date used for on-time and delay is the
+date of the **last** return.
 
 ### Worked example (from the automated tests)
 A vendor with 6 returned jobs (4 on time, 2 late by 4 and 6 days), 1 vendor-caused cancellation, 1 customer cancellation (excluded),
@@ -78,7 +83,7 @@ A vendor with 6 returned jobs (4 on time, 2 late by 4 and 6 days), 1 vendor-caus
   opens a confirmation with date given, committed date (suggested from the delivery days), Given By and Assigned Staff User, and
   only then creates the job with the quoted total as job amount. Nothing is ever assigned automatically.
 - **Price history**: job amounts and quotations for matching parts or a category, per vendor (lowest / average / highest / latest
-  per-part rate where the quantity is known). Job amounts are the agreed amounts recorded on the job; actual payments arrive in Phase 6.
+  per-part rate where the quantity is known). Job amounts are the amounts recorded on the job (the vendor invoice amount once recorded); payments are on the Payments page.
 
 ## 5. Permissions (checked by the database)
 | Action | Admin | Manager | Staff |
