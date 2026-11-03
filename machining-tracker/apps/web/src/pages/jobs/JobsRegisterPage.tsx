@@ -11,6 +11,7 @@ import { useDateFormat, useRealtimeInvalidate } from "../../hooks/data";
 import { useCategories, useVendors } from "../../hooks/master";
 import { downloadWorkbook, type ExportSheet } from "../../lib/excel";
 import { DateText, DueText, Money, StatusBadge, SourceBadge } from "../../components/jobs";
+import { RevisionBadge, useRevisionLimit } from "../../components/commitments";
 import { Alert, Button, Card, EmptyState, Field, Input, PageHeader, Select, Spinner, Table, cx, td, th } from "../../components/ui";
 
 const PAGE_SIZE = 25;
@@ -63,6 +64,7 @@ function buildQuery(f: Filters, select = "*", count = false) {
 export function JobsRegisterPage() {
   const { can } = useAuth();
   const dateFormat = useDateFormat();
+  const revisionLimit = useRevisionLimit();
   const categories = useCategories();
   const vendors = useVendors();
   const [params, setParams] = useSearchParams();
@@ -147,6 +149,7 @@ export function JobsRegisterPage() {
           { header: "Date Given", value: (r) => r.date_given, format: "date" },
           { header: "Original Commitment Date", value: (r) => r.original_commitment_date, format: "date" },
           { header: "Current Commitment Date", value: (r) => r.current_commitment_date, format: "date" },
+          { header: "Commitment Revisions", value: (r) => r.revision_count, format: "int" },
           { header: "Actual Return Date", value: (r) => r.return_date, format: "date" },
           { header: "Quantity Sent", value: (r) => r.qty_sent, format: "int" },
           { header: "Job Amount (₹)", value: (r) => r.amount, format: "inr" },
@@ -340,6 +343,7 @@ export function JobsRegisterPage() {
                       {r.original_commitment_date && r.original_commitment_date !== r.current_commitment_date && (
                         <p className="text-xs text-slate-400 line-through">{formatDate(r.original_commitment_date, dateFormat)}</p>
                       )}
+                      {r.revision_count > 0 && <div className="mt-0.5"><RevisionBadge count={r.revision_count} limit={revisionLimit} /></div>}
                     </td>
                     <td className={td}>
                       <DateText value={r.return_date} format={dateFormat} />

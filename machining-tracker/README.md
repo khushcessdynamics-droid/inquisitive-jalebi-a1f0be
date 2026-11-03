@@ -4,7 +4,7 @@ Online, multi-user application for outsourced machining jobs and vendor manageme
 Free-first stack: **React + TypeScript + Vite + Tailwind** (static site on Cloudflare) and **Supabase Free**
 (PostgreSQL, Auth with MFA, Storage, Realtime, Edge Functions). Mandatory running cost: **₹0**.
 
-> Status: **Phases 3, 3B and 4 complete and tested locally. Not deployed yet.** See `docs/PHASE3_REPORT.md` and `docs/PHASE4_REPORT.md`.
+> Status: **Phases 3, 3B, 4 and 5 complete and tested locally. Not deployed yet.** See `docs/PHASE3_REPORT.md`, `docs/PHASE4_REPORT.md` and `docs/PHASE5_REPORT.md`.
 
 ## What works today
 - Invitation-only accounts, sign-in, sign-out, sign out on all devices
@@ -25,8 +25,14 @@ Free-first stack: **React + TypeScript + Vite + Tailwind** (static site on Cloud
 - **Vendors**: vendor master with categories and contacts, vendor page with counts, Excel export
 - **Excel import** of the original tracker (or templates) with a server-checked preview
 
-Commitment history, reliability score and cost comparison (Phase 5), returns, quality and payments (Phase 6),
-WhatsApp and reminders (Phase 7), dashboard and weekly reports (Phase 8) follow.
+- **Commitment history**: revise committed dates (original kept, every revision numbered with reason and who asked), timeline per job,
+  frequently revised jobs and vendors highlighted
+- **Vendor reliability**: six-factor score (30/25/15/10/10/10) per vendor and per category, by financial year, with sample sizes,
+  "insufficient data" instead of misleading scores, and a "how this score was calculated" panel listing every job counted
+- **Cost comparison**: quotations per requirement, lowest/highest/average and % differences, charts, a recommendation that is not
+  price-only, manual choice and confirmed job creation, price history per vendor (`docs/RELIABILITY_RULES.md`)
+
+Returns, quality and payments (Phase 6), WhatsApp and reminders (Phase 7), dashboard and weekly reports (Phase 8) follow.
 
 ## Folder structure
 ```

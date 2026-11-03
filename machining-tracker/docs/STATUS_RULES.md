@@ -24,10 +24,12 @@ Phase 6 adds **Partially Returned** and **Quality Inspection Pending** from real
 | Days since given ("Days Taken" in the Excel tracker) | (return date, cancellation date, or today) minus date given to the current vendor |
 | Remaining days | current committed date minus today (open jobs) |
 | Delay vs original | days after the **original** commitment (today for open jobs, return date for completed); never negative |
-| Delay vs current | the same against the latest revised commitment |
+| Delay vs latest | the same against the latest (revised) commitment |
+| Revisions | number of commitment revisions of the current vendor; highlighted at the revisions cap (default 2). History and rules: `docs/RELIABILITY_RULES.md` |
 | Long pending | open and with the vendor for more than "Long-pending alert" days (default 10, the Excel tracker's late limit) |
 | Financial year | April to March, from the date given (e.g. 2026-27) |
 | Job number | JOB-2627-0001: financial year of creation + running number per year |
 
 ## Dates kept separately
 Date given to vendor · original committed date (set once, never changed) · current (revised) committed date · actual return date.
+Every revision is kept permanently in the commitment history (job page > Commitment timeline).

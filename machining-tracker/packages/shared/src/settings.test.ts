@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { APPROVED_RELIABILITY_WEIGHTS, sumWeights, validateSetting } from "./settings";
+import { APPROVED_RELIABILITY_WEIGHTS, DEFAULT_COST_COMPARISON_WEIGHTS, sumWeights, validateSetting } from "./settings";
 
 const reliability = {
   weights: { ...APPROVED_RELIABILITY_WEIGHTS },
@@ -27,6 +27,22 @@ describe("reliability settings", () => {
     expect(validateSetting("reliability", { ...reliability, weights: { ...reliability.weights, on_time: -5, quality: 60 } }).success).toBe(false);
     expect(validateSetting("reliability", { ...reliability, extra: 1 }).success).toBe(false);
     expect(validateSetting("reliability", { ...reliability, labels: { excellent: 70, good: 85, average: 50 } }).success).toBe(false);
+  });
+});
+
+describe("cost comparison settings", () => {
+  const base = { weights: { ...DEFAULT_COST_COMPARISON_WEIGHTS }, min_quotes: 2, stale_quote_days: 90 };
+  it("default weights add up to 100 and are valid", () => {
+    expect(validateSetting("cost_comparison", base).success).toBe(true);
+  });
+  it("rejects weights that do not total 100", () => {
+    expect(validateSetting("cost_comparison", { ...base, weights: { price: 50, reliability: 35, delivery: 20 } }).success).toBe(false);
+  });
+  it("never allows a price-only recommendation", () => {
+    expect(validateSetting("cost_comparison", { ...base, weights: { price: 100, reliability: 0, delivery: 0 } }).success).toBe(false);
+  });
+  it("needs at least 2 quotations to recommend", () => {
+    expect(validateSetting("cost_comparison", { ...base, min_quotes: 1 }).success).toBe(false);
   });
 });
 

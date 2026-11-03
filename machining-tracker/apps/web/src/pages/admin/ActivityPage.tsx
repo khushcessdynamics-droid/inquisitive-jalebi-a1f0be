@@ -114,6 +114,7 @@ function History() {
               <option value="settings">Settings</option>
               <option value="jobs">Jobs</option>
               <option value="vendors">Vendors</option>
+              <option value="quotations">Cost comparison</option>
               <option value="attachments">Attachments</option>
               <option value="import">Excel import</option>
             </Select>

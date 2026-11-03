@@ -130,7 +130,7 @@ describe("first Admin bootstrap and MFA", () => {
     expect(a.aal).toBe("aal2");
     expect([...(a.permissions as string[])].sort()).toEqual([...PERMISSION_KEYS].sort());
     const { data } = await admin.from("app_settings").select("key");
-    expect(data?.length).toBe(9);
+    expect(data?.length).toBe(10);
   });
 
   it("a new sign-in starts at aal1 again and needs the code", async () => {

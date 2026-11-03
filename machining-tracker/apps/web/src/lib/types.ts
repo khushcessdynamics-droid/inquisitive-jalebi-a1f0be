@@ -123,6 +123,7 @@ export interface JobRegisterRow {
   delay_days_current: number | null;
   long_pending: boolean | null;
   financial_year: string | null;
+  revision_count: number;
 }
 
 export interface AssignmentRow {

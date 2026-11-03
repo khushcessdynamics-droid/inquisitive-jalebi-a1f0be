@@ -126,6 +126,34 @@ export const APPROVED_RELIABILITY_WEIGHTS: Record<ReliabilityFactor, number> = {
   vendor_cancellation: 10,
 };
 
+/** Weights for the cost-comparison recommendation. Quality enters through the reliability score (25% of it). */
+export const COST_COMPARISON_FACTORS = ["price", "reliability", "delivery"] as const;
+export type CostComparisonFactor = (typeof COST_COMPARISON_FACTORS)[number];
+export const COST_COMPARISON_FACTOR_LABELS: Record<CostComparisonFactor, string> = {
+  price: "Price (total for the required quantity)",
+  reliability: "Vendor reliability score",
+  delivery: "Expected delivery days",
+};
+export const DEFAULT_COST_COMPARISON_WEIGHTS: Record<CostComparisonFactor, number> = { price: 45, reliability: 35, delivery: 20 };
+
+export const costComparisonSettingsSchema = z
+  .object({
+    weights: z
+      .object({ price: weight, reliability: weight, delivery: weight })
+      .strict(),
+    min_quotes: wholeNumber(2, 10, "Minimum quotations to recommend"),
+    stale_quote_days: wholeNumber(7, 730, "Quotation age warning (days)"),
+  })
+  .strict()
+  .refine((v) => Math.round((v.weights.price + v.weights.reliability + v.weights.delivery) * 100) === 10000, {
+    message: "Recommendation weights must add up to exactly 100",
+    path: ["weights"],
+  })
+  .refine((v) => v.weights.price < 100, {
+    message: "Price cannot carry 100%: the recommendation must not be based on price alone",
+    path: ["weights", "price"],
+  });
+
 export const remindersSettingsSchema = z
   .object({
     enabled: z.boolean(),
@@ -175,6 +203,7 @@ export const settingsSchemas = {
   security: securitySettingsSchema,
   jobs: jobsSettingsSchema,
   reliability: reliabilitySettingsSchema,
+  cost_comparison: costComparisonSettingsSchema,
   reminders: remindersSettingsSchema,
   weekly_report: weeklyReportSettingsSchema,
   attachments: attachmentsSettingsSchema,

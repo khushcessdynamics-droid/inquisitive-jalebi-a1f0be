@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
-import { formatDate } from "@cess/shared";
+import { formatDate, recentFinancialYears, todayIST } from "@cess/shared";
 import { useAuth } from "../../auth/AuthProvider";
 import { supabase } from "../../lib/supabase";
 import { toAppError, unwrap } from "../../lib/errors";
@@ -11,6 +11,8 @@ import { useCategories, useVendors } from "../../hooks/master";
 import { Money } from "../../components/jobs";
 import { Alert, Badge, Button, Card, EmptyState, PageHeader, Spinner, Table, td, th } from "../../components/ui";
 import { VendorDialog } from "./VendorsPage";
+import { CancellationList, MeasureGrid, ReliabilityDetail, ScoreCell, plural, useReliability } from "../../components/reliability";
+import type { CommitmentRevisionRow, ReliabilityRow } from "../../lib/phase5Types";
 
 interface Summary {
   assignments: number;
@@ -52,6 +54,16 @@ export function VendorDetailPage() {
   const vendors = useVendors();
   const categories = useCategories();
   const [editing, setEditing] = useState(false);
+  const canScore = can("reliability.view");
+  const fy = recentFinancialYears(todayIST(), 1)[0]!;
+  const [scoreFy, setScoreFy] = useState<string>("");
+  const overall = useReliability({ vendor_id: id, fy: scoreFy || undefined }, canScore);
+  const perCategory = useReliability({ vendor_id: id, fy: scoreFy || undefined, by_category: true }, canScore);
+  const [detail, setDetail] = useState<null | { categoryId?: string; name: string }>(null);
+  const revisions = useQuery({
+    queryKey: ["vendor-revisions", id],
+    queryFn: async () => unwrap(await supabase.from("commitment_history").select("*").eq("vendor_id", id).order("created_at", { ascending: false }).limit(50)) as CommitmentRevisionRow[],
+  });
   const vendor = vendors.data?.find((v) => v.id === id);
   const summary = useQuery({
     queryKey: ["vendor-summary", id],
@@ -105,9 +117,44 @@ export function VendorDetailPage() {
           <Stat label="Business (excl. cancelled)" value={new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(s.business_amount)} />
         </div>
       )}
-      <p className="mb-4 text-xs text-slate-500">
-        On-time %, average delay, quality acceptance and the six-factor reliability score are added with the Vendor Reliability module (next phase).
-      </p>
+      {canScore && (
+        <Card
+          className="mb-4"
+          title="Reliability score"
+          actions={
+            <span className="flex items-center gap-2">
+              <label htmlFor="vd-fy" className="text-xs text-slate-500">
+                Period
+              </label>
+              <select id="vd-fy" className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={scoreFy} onChange={(e) => setScoreFy(e.target.value)}>
+                <option value="">All years</option>
+                {recentFinancialYears(todayIST(), 6).map((y) => (
+                  <option key={y} value={y}>
+                    FY {y}
+                  </option>
+                ))}
+              </select>
+              <Link to={`/vendors/reliability?fy=${scoreFy || fy}`} className="text-xs font-medium text-brand-700 hover:underline">
+                Compare vendors
+              </Link>
+            </span>
+          }
+        >
+          {overall.isLoading ? (
+            <Spinner />
+          ) : overall.error ? (
+            <Alert tone="error">{toAppError(overall.error).message}</Alert>
+          ) : !overall.data?.rows[0] ? (
+            <p className="text-sm text-slate-600">No jobs with this vendor in this period, so there is no score.</p>
+          ) : (
+            <VendorScore
+              row={overall.data.rows[0]}
+              categories={perCategory.data?.rows ?? []}
+              onDetail={(categoryId, name) => setDetail({ categoryId, name })}
+            />
+          )}
+        </Card>
+      )}
       <div className="grid gap-4 lg:grid-cols-3">
         <Card title="Contact and details">
           <dl className="space-y-2 text-sm">
@@ -175,7 +222,104 @@ export function VendorDetailPage() {
           )}
         </Card>
       </div>
+      <Card className="mt-4" title={`Commitment revisions (${revisions.data?.length ?? 0}${(revisions.data?.length ?? 0) === 50 ? "+" : ""})`}>
+        {revisions.isLoading ? (
+          <Spinner />
+        ) : !revisions.data?.length ? (
+          <p className="text-sm text-slate-600">This vendor has not revised any committed date.</p>
+        ) : (
+          <Table>
+            <thead>
+              <tr>
+                <th className={th}>Job</th>
+                <th className={th}>Revision</th>
+                <th className={th}>Change</th>
+                <th className={th}>Requested by</th>
+                <th className={th}>Reason</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {revisions.data.map((r) => (
+                <tr key={r.id}>
+                  <td className={td}>
+                    <Link to={`/jobs/${r.job_id}`} className="font-medium text-brand-700 hover:underline">
+                      {r.job_no}
+                    </Link>
+                    <p className="text-xs text-slate-500">{r.part_label}</p>
+                  </td>
+                  <td className={`${td} whitespace-nowrap`}>
+                    #{r.revision_no} · {formatDate(r.changed_on, dateFormat)}
+                  </td>
+                  <td className={`${td} whitespace-nowrap text-xs`}>
+                    {formatDate(r.previous_date, dateFormat)} → <strong>{formatDate(r.new_date, dateFormat)}</strong>
+                    <span className="block text-slate-500">original {formatDate(r.original_date, dateFormat)} ({r.days_from_original > 0 ? "+" : ""}{r.days_from_original} days)</span>
+                  </td>
+                  <td className={td}>{r.requested_by === "vendor" ? <Badge tone="amber">Vendor</Badge> : <Badge>CESS</Badge>}</td>
+                  <td className={`${td} text-xs`}>
+                    {r.reason}
+                    <span className="block text-slate-500">{r.changed_by_name}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+      </Card>
+      {detail && (
+        <ReliabilityDetail
+          vendorId={id}
+          vendorName={`${vendor.name}${detail.categoryId ? ` · ${detail.name}` : ""}`}
+          filters={{ fy: scoreFy || undefined, category_id: detail.categoryId }}
+          dateFormat={dateFormat}
+          open
+          onClose={() => setDetail(null)}
+        />
+      )}
       <VendorDialog vendor={vendor} open={editing} onClose={() => setEditing(false)} />
     </>
+  );
+}
+
+function VendorScore({ row, categories, onDetail }: { row: ReliabilityRow; categories: ReliabilityRow[]; onDetail: (categoryId: string | undefined, name: string) => void }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-slate-500">Overall</p>
+          <div className="mt-1 text-lg">
+            <ScoreCell row={row} />
+          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            {plural(row.eligible_jobs, "eligible job", "eligible jobs")} ({row.counts.completed} returned, {plural(row.counts.vendor_cancelled, "vendor-caused cancellation", "vendor-caused cancellations")}) of {row.counts.total} given
+          </p>
+        </div>
+        <Button variant="secondary" onClick={() => onDetail(undefined, "")}>
+          How this score was calculated
+        </Button>
+      </div>
+      <MeasureGrid row={row} />
+      {categories.length > 0 && (
+        <div>
+          <h3 className="mb-1 text-sm font-semibold text-slate-800">By machining category</h3>
+          <ul className="divide-y divide-slate-100 rounded-md border border-slate-200">
+            {categories.map((c) => (
+              <li key={c.category_id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+                <span className="font-medium text-slate-800">{c.category_name}</span>
+                <span className="flex flex-wrap items-center gap-3">
+                  <ScoreCell row={c} />
+                  <button type="button" className="text-xs font-medium text-brand-700 hover:underline" onClick={() => onDetail(c.category_id ?? undefined, c.category_name ?? "")}>
+                    How calculated
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div>
+        <h3 className="mb-1 text-sm font-semibold text-slate-800">Cancellations</h3>
+        <CancellationList row={row} />
+      </div>
+    </div>
   );
 }

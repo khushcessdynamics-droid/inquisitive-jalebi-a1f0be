@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, CalendarCheck, Pencil, Send, Shuffle, Archive } from "lucide-react";
+import { ArrowRight, CalendarCheck, CalendarClock, Pencil, Send, Shuffle, Archive } from "lucide-react";
 import { formatDate, formatDateTimeIST, formatINR } from "@cess/shared";
 import { useAuth } from "../../auth/AuthProvider";
 import { supabase } from "../../lib/supabase";
@@ -11,6 +11,7 @@ import type { ActivityRow, AssignmentRow, JobRegisterRow } from "../../lib/types
 import { useDateFormat, useRealtimeInvalidate } from "../../hooks/data";
 import { DateText, DueText, Money, SourceBadge, StatusBadge } from "../../components/jobs";
 import { AttachmentsCard } from "../../components/Attachments";
+import { CommitmentTimeline, ReviseCommitmentDialog, RevisionBadge, useCommitmentHistory, useRevisionLimit } from "../../components/commitments";
 import { CancelForwardDialog, EditAssignmentDialog, EditJobDialog, ReclassifyDialog, SendToVendorDialog } from "../../components/jobForms";
 import { Alert, Badge, Button, Card, PageHeader, ReasonDialog, Spinner, cx } from "../../components/ui";
 
@@ -65,7 +66,9 @@ export function JobDetailPage() {
     },
   });
 
-  const [dialog, setDialog] = useState<null | "edit" | "send" | "assignment" | "cancel" | "archive">(null);
+  const history = useCommitmentHistory(id);
+  const revisionLimit = useRevisionLimit();
+  const [dialog, setDialog] = useState<null | "edit" | "send" | "assignment" | "cancel" | "archive" | "revise">(null);
   const [reclassify, setReclassify] = useState<AssignmentWithNames | null>(null);
 
   if (job.isLoading) return <Spinner />;
@@ -109,6 +112,11 @@ export function JobDetailPage() {
                   <CalendarCheck className="h-4 w-4" /> {open.original_commitment_date ? "Vendor details" : "Record committed date"}
                 </Button>
               )}
+              {open && open.current_commitment_date && can("commitments.change") && !j.closed_at && (
+                <Button variant="secondary" onClick={() => setDialog("revise")}>
+                  <CalendarClock className="h-4 w-4" /> Revise commitment
+                </Button>
+              )}
               {open && can("jobs.cancel") && !j.closed_at && (
                 <Button variant="danger" onClick={() => setDialog("cancel")}>
                   <Shuffle className="h-4 w-4" /> Cancel / forward vendor
@@ -134,13 +142,13 @@ export function JobDetailPage() {
             <Fact label="Original commitment"><DateText value={j.original_commitment_date} format={dateFormat} empty="Not recorded" /></Fact>
             <Fact label="Current commitment">
               <DateText value={j.current_commitment_date} format={dateFormat} empty="Not recorded" />
-              {j.original_commitment_date && j.current_commitment_date !== j.original_commitment_date && <Badge tone="amber">Revised</Badge>}
+              {j.revision_count > 0 && <> <RevisionBadge count={j.revision_count} limit={revisionLimit} /></>}
             </Fact>
             <Fact label="Actual return"><DateText value={j.return_date} format={dateFormat} empty="Not returned" /></Fact>
             <Fact label="Days since given">{j.days_since_given ?? "—"}</Fact>
-            <Fact label={j.remaining_days !== null && j.remaining_days >= 0 ? "Remaining days" : "Delay vs original / current"}>
-              {j.remaining_days !== null && j.remaining_days >= 0 ? j.remaining_days : j.delay_days !== null ? `${j.delay_days} / ${j.delay_days_current ?? 0} days` : "—"}
-            </Fact>
+            <Fact label="Remaining days">{j.remaining_days !== null && j.remaining_days >= 0 ? j.remaining_days : "—"}</Fact>
+            <Fact label="Delay vs original commitment">{j.delay_days !== null ? `${j.delay_days} day${j.delay_days === 1 ? "" : "s"}` : "—"}</Fact>
+            <Fact label="Delay vs latest commitment">{j.delay_days_current !== null ? `${j.delay_days_current} day${j.delay_days_current === 1 ? "" : "s"}` : "—"}</Fact>
             <Fact label="Quantity sent">{j.qty_sent ?? <span className="text-amber-700">Not specified</span>}</Fact>
             <Fact label="Job amount"><Money value={j.amount} /></Fact>
             <Fact label="Financial year">{j.financial_year ?? "—"}</Fact>
@@ -221,21 +229,13 @@ export function JobDetailPage() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        <Card title="History of this job" className="lg:col-span-2">
-          {activity.isLoading ? (
+        <Card title="Commitment timeline" className="lg:col-span-2">
+          {history.error ? (
+            <Alert tone="error">{toAppError(history.error).message}</Alert>
+          ) : assignments.isLoading || history.isLoading ? (
             <Spinner />
-          ) : activity.error ? (
-            <Alert tone="error">{toAppError(activity.error).message}</Alert>
           ) : (
-            <ul className="space-y-2">
-              {[...(activity.data ?? [])].reverse().map((e) => (
-                <li key={e.id} className="text-sm">
-                  <span className="font-medium text-slate-800">{actionLabel(e.action)}</span>
-                  <span className="text-slate-500"> · {e.actor_name ?? (e.source === "sql" ? "Database owner" : "System")} · {formatDateTimeIST(e.occurred_at, dateFormat)}</span>
-                  {e.reason && <p className="text-xs text-slate-600">Reason: {e.reason}</p>}
-                </li>
-              ))}
-            </ul>
+            <CommitmentTimeline assignments={assignments.data ?? []} revisions={history.data ?? []} dateFormat={dateFormat} limit={revisionLimit} />
           )}
         </Card>
         <Card title="Other jobs for this part">
@@ -261,9 +261,39 @@ export function JobDetailPage() {
         </Card>
       </div>
 
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <Card title="History of this job" className="lg:col-span-3">
+          {activity.isLoading ? (
+            <Spinner />
+          ) : activity.error ? (
+            <Alert tone="error">{toAppError(activity.error).message}</Alert>
+          ) : (
+            <ul className="space-y-2">
+              {[...(activity.data ?? [])].reverse().map((e) => (
+                <li key={e.id} className="text-sm">
+                  <span className="font-medium text-slate-800">{actionLabel(e.action)}</span>
+                  <span className="text-slate-500"> · {e.actor_name ?? (e.source === "sql" ? "Database owner" : "System")} · {formatDateTimeIST(e.occurred_at, dateFormat)}</span>
+                  {e.reason && <p className="text-xs text-slate-600">Reason: {e.reason}</p>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
+
       {editMode && <EditJobDialog job={j} mode={editMode} open={dialog === "edit"} onClose={() => setDialog(null)} />}
       <SendToVendorDialog job={j} open={dialog === "send"} onClose={() => setDialog(null)} />
       {open && editMode && <EditAssignmentDialog job={j} assignment={open} mode={editMode} open={dialog === "assignment"} onClose={() => setDialog(null)} />}
+      {open && open.current_commitment_date && (
+        <ReviseCommitmentDialog
+          jobId={j.id}
+          assignment={open}
+          vendorName={open.vendor?.name ?? ""}
+          revisions={(history.data ?? []).filter((r) => r.assignment_id === open.id).length}
+          open={dialog === "revise"}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {open && <CancelForwardDialog job={j} assignment={open} vendorName={open.vendor?.name ?? ""} open={dialog === "cancel"} onClose={() => setDialog(null)} />}
       {reclassify && <ReclassifyDialog assignmentId={reclassify.id} version={reclassify.version} jobId={j.id} open onClose={() => setReclassify(null)} />}
       <ReasonDialog

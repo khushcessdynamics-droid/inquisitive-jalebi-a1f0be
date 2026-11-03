@@ -506,7 +506,7 @@ export function EditAssignmentDialog({ job, assignment, mode, open, onClose }: {
         <Field
           label="Vendor committed delivery date"
           htmlFor="ea-commit"
-          hint={commitmentKnown ? "Recorded and locked. Revisions are kept in the commitment history (next phase)." : "Can be entered once; it then becomes the original commitment."}
+          hint={commitmentKnown ? "Recorded and locked. Use \"Revise commitment\" on the job page; every revision is kept in the commitment history." : "Can be entered once; it then becomes the original commitment."}
         >
           <Input id="ea-commit" type="date" min={form.dispatched_on} disabled={commitmentKnown} value={form.commitment_date} onChange={set("commitment_date")} />
         </Field>

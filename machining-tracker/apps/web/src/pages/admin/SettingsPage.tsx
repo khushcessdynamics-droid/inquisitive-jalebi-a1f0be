@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import {
+  COST_COMPARISON_FACTORS,
+  COST_COMPARISON_FACTOR_LABELS,
   DATE_FORMATS,
   RELIABILITY_FACTORS,
   RELIABILITY_FACTOR_LABELS,
@@ -18,7 +20,7 @@ import type { CancelReasonRow, MasterRow, SettingRow } from "../../lib/types";
 import { useRealtimeInvalidate, useSettings } from "../../hooks/data";
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner, Table, cx, td, th } from "../../components/ui";
 
-type Tab = "company" | "localization" | "categories" | "given_by" | "cancel" | "reliability" | "jobs" | "security";
+type Tab = "company" | "localization" | "categories" | "given_by" | "cancel" | "reliability" | "cost" | "jobs" | "security";
 
 export function SettingsPage() {
   const { can } = useAuth();
@@ -29,6 +31,7 @@ export function SettingsPage() {
     { key: "given_by", label: "Given By names", show: can("settings.change") },
     { key: "cancel", label: "Cancellation reasons", show: can("settings.change") },
     { key: "reliability", label: "Reliability score", show: can("settings.change") },
+    { key: "cost", label: "Cost comparison", show: can("settings.change") },
     { key: "jobs", label: "Job thresholds", show: can("settings.change") },
     { key: "security", label: "Session security", show: can("users.manage") },
   ];
@@ -68,6 +71,7 @@ export function SettingsPage() {
           {tab === "given_by" && <MasterList table="given_by_names" title="Given By names" />}
           {tab === "cancel" && <CancelReasons />}
           {tab === "reliability" && <ReliabilityForm row={settings.data!.reliability!} />}
+          {tab === "cost" && <CostComparisonForm row={settings.data!.cost_comparison!} />}
           {tab === "jobs" && <JobsForm row={settings.data!.jobs!} />}
           {tab === "security" && <SecurityForm row={settings.data!.security!} />}
         </>
@@ -232,7 +236,7 @@ function ReliabilityForm({ row }: { row: SettingRow }) {
     <Card title="Vendor reliability score">
       <p className="mb-4 text-sm text-slate-600">
         Approved six-factor model. Weights must add up to 100. Only vendor-caused cancellations affect the score; jobs without the required data are
-        excluded from that factor. The score itself is calculated by the Vendor Reliability module.
+        excluded from that factor. The score is calculated on the Vendor Reliability page, where every job counted is listed.
       </p>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {RELIABILITY_FACTORS.map((f) => (
@@ -272,6 +276,47 @@ function ReliabilityForm({ row }: { row: SettingRow }) {
         ))}
       </div>
       <p className="mt-2 text-xs text-slate-500">Below the "Average" threshold the label is "Needs Improvement".</p>
+      <SaveBar s={s} />
+    </Card>
+  );
+}
+
+type CostComparison = { weights: Record<(typeof COST_COMPARISON_FACTORS)[number], number>; min_quotes: number; stale_quote_days: number };
+
+function CostComparisonForm({ row }: { row: SettingRow }) {
+  const s = useSettingDraft<CostComparison>("cost_comparison", row);
+  const total = Math.round(COST_COMPARISON_FACTORS.reduce((a, f) => a + (s.draft.weights[f] || 0), 0) * 100) / 100;
+  const num = (v: string) => (v === "" ? Number.NaN : Number(v));
+  return (
+    <Card title="Vendor cost comparison: recommendation">
+      <p className="mb-4 text-sm text-slate-600">
+        The recommendation weighs price against vendor reliability and delivery time, so the cheapest quotation is not chosen blindly. Quality performance is already part of the
+        reliability score (25% of it). The recommendation is advice only: a person always chooses the vendor and confirms the job.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {COST_COMPARISON_FACTORS.map((f) => (
+          <Field key={f} label={`${COST_COMPARISON_FACTOR_LABELS[f]} (%)`} htmlFor={`cw-${f}`}>
+            <Input
+              id={`cw-${f}`}
+              type="number"
+              min={0}
+              max={100}
+              step="0.5"
+              value={Number.isNaN(s.draft.weights[f]) ? "" : s.draft.weights[f]}
+              onChange={(e) => s.setDraft({ ...s.draft, weights: { ...s.draft.weights, [f]: num(e.target.value) } })}
+            />
+          </Field>
+        ))}
+      </div>
+      <p className={cx("mt-2 text-sm font-medium", total === 100 ? "text-emerald-700" : "text-red-600")}>Total: {total} / 100</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <Field label="Minimum quotations before recommending" htmlFor="cc-min">
+          <Input id="cc-min" type="number" min={2} max={10} value={s.draft.min_quotes} onChange={(e) => s.setDraft({ ...s.draft, min_quotes: Number(e.target.value) })} />
+        </Field>
+        <Field label="Warn when a quotation is older than (days)" htmlFor="cc-stale">
+          <Input id="cc-stale" type="number" min={7} max={730} value={s.draft.stale_quote_days} onChange={(e) => s.setDraft({ ...s.draft, stale_quote_days: Number(e.target.value) })} />
+        </Field>
+      </div>
       <SaveBar s={s} />
     </Card>
   );
