@@ -5,10 +5,8 @@ import { supabase } from "../../lib/supabase";
 import { toAppError, unwrap } from "../../lib/errors";
 import { useDateFormat } from "../../hooks/data";
 import { Alert, Badge, Button, Card, PageHeader, Spinner, Table, cx, td, th } from "../../components/ui";
-
 // Supabase Free plan limits, checked on 2026-11-02 against supabase.com/pricing and the Supabase docs.
-const FREE_DB_BYTES = 500 * 1024 * 1024;
-const FREE_STORAGE_BYTES = 1024 * 1024 * 1024;
+import { FREE_DB_BYTES, FREE_STORAGE_BYTES, JOB_LABELS, healthWarnings, type ScheduledJob } from "../../lib/healthWarnings";
 
 interface BackupRun {
   finished_at: string | null;
@@ -32,6 +30,9 @@ interface Health {
   activity_log_rows: number;
   last_verified_backup: BackupRun | null;
   last_failed_backup: BackupRun | null;
+  scheduled_jobs: ScheduledJob[] | null;
+  reminder_engine: { enabled: boolean; run_time_ist: string | null; last_run_date: string | null; last_run_at: string | null; reminders_created: number | null } | null;
+  last_weekly_report: { period_start: string; period_end: string; kind: string; generated_at: string } | null;
 }
 
 function bytes(n: number | null | undefined): string {
@@ -80,6 +81,7 @@ export function SystemHealthPage() {
     );
   }
   const h = q.data!;
+  const warnings = healthWarnings(h);
   return (
     <>
       <PageHeader
@@ -92,6 +94,21 @@ export function SystemHealthPage() {
         }
       />
       <div className="grid gap-4 lg:grid-cols-2">
+        <Card title="Needs attention" className="lg:col-span-2">
+          {warnings.length === 0 ? (
+            <p className="text-sm">
+              <Badge tone="green">OK</Badge> Backups, space and scheduled jobs look normal.
+            </p>
+          ) : (
+            <ul className="space-y-2" aria-label="Problems found">
+              {warnings.map((w) => (
+                <li key={w.text}>
+                  <Alert tone={w.level === "critical" ? "error" : "warning"}>{w.text}</Alert>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
         <Card title="Status">
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -146,6 +163,64 @@ export function SystemHealthPage() {
               </Alert>
             </div>
           )}
+        </Card>
+        <Card title="Scheduled jobs (database scheduler)" className="lg:col-span-2">
+          {h.scheduled_jobs === null ? (
+            <Alert tone="error">The database scheduler is not available.</Alert>
+          ) : (
+            <Table>
+              <thead>
+                <tr>
+                  <th className={th}>Job</th>
+                  <th className={th}>Last run</th>
+                  <th className={th}>Result</th>
+                  <th className={th}>Runs / failed (7 days)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {h.scheduled_jobs.map((j) => (
+                  <tr key={j.name}>
+                    <td className={td}>
+                      {JOB_LABELS[j.name] ?? j.name}
+                      {!j.active && (
+                        <span className="ml-2">
+                          <Badge tone="red">Off</Badge>
+                        </span>
+                      )}
+                    </td>
+                    <td className={`${td} whitespace-nowrap`}>{j.last_start ? formatDateTimeIST(j.last_start, dateFormat) : "not yet"}</td>
+                    <td className={td}>
+                      {j.last_status === null ? "—" : j.last_status === "succeeded" ? <Badge tone="green">OK</Badge> : <Badge tone="red">{j.last_status}</Badge>}
+                      {j.last_message && <p className="mt-1 text-xs text-red-700">{j.last_message}</p>}
+                    </td>
+                    <td className={td}>
+                      {j.runs_7d} / {j.failures_7d}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+          <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+            <div>
+              <dt className="text-slate-500">Reminders</dt>
+              <dd>
+                {!h.reminder_engine?.enabled
+                  ? "Switched off in Settings"
+                  : h.reminder_engine.last_run_at
+                    ? `Last run ${formatDateTimeIST(h.reminder_engine.last_run_at, dateFormat)}; daily at ${h.reminder_engine.run_time_ist ?? "09:00"} IST`
+                    : `Not run yet; daily at ${h.reminder_engine.run_time_ist ?? "09:00"} IST`}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Latest weekly report</dt>
+              <dd>
+                {h.last_weekly_report
+                  ? `${h.last_weekly_report.period_start} to ${h.last_weekly_report.period_end} (${h.last_weekly_report.kind}), made ${formatDateTimeIST(h.last_weekly_report.generated_at, dateFormat)}`
+                  : "None yet"}
+              </dd>
+            </div>
+          </dl>
         </Card>
         <Card title="Rows per table" className="lg:col-span-2">
           <Table>

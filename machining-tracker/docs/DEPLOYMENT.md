@@ -213,6 +213,9 @@ Then I sign in through the public address and run the main journeys. Only then i
   migrations already applied are skipped.
 - **Checks on every pull request**: GitHub Actions runs type checks, unit tests, the production build, and the database,
   browser and production-build tests on a throw-away local Supabase (`.github/workflows/ci.yml`). It uses no secret.
+- **Daily live-site check**: add the repository variables `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (public values; `APP_SITE_URL`
+  is already there from step 2A) and GitHub checks the live site every morning (`docs/MONITORING.md`).
+- **Own address** (optional, e.g. `tracker.cess.co.in`): `docs/DOMAIN_AND_HTTPS.md`. **Maintenance**: `docs/MAINTENANCE.md`.
 
 ## Production checklist
 
@@ -233,4 +236,5 @@ Tick every line before telling the team the app is live.
 - [ ] Signed in on a phone and on an office PC; opened a job, uploaded and downloaded a drawing
 - [ ] Backup tool pointed at the live project: `backup-now.cmd` ends with **VERIFIED**; daily schedule set; USB second copy written;
       second copy of `backup.key` stored safely
+- [ ] Daily live-site check switched on (GitHub variables `APP_SITE_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`) and run once by hand
 - [ ] GitHub repository made private (recommended); two-step sign-in on the GitHub account

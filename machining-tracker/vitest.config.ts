@@ -20,6 +20,17 @@ export default defineConfig({
           fileParallelism: false,
         },
       },
+      {
+        // capacity / speed measurement for docs/COSTS.md (npm run test:capacity); not part of the normal test runs
+        test: {
+          name: "capacity",
+          include: ["tests/capacity/**/*.test.ts"],
+          environment: "node",
+          testTimeout: 3_600_000,
+          hookTimeout: 600_000,
+          fileParallelism: false,
+        },
+      },
     ],
   },
 });

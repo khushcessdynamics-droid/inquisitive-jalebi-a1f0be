@@ -113,6 +113,8 @@ pull request (`.github/workflows/ci.yml`).
 
 ## Deployment
 **Prepared, not deployed.** Step-by-step guide: `docs/DEPLOYMENT.md` (Supabase Free + Cloudflare Pages Free, ₹0, no payment card).
+Own address and HTTPS: `docs/DOMAIN_AND_HTTPS.md`. Running cost and capacity (measured): `docs/COSTS.md`. Keeping it running:
+`docs/MAINTENANCE.md` and `docs/MONITORING.md`.
 After deployment, `tools/deploy-check/verify.mjs` checks the public site and the Supabase project from outside (HTTPS, security
 headers, no secrets in the JavaScript, nothing readable without signing in, private files, Edge Function origin rules).
 Nothing is created or paid for without your approval.

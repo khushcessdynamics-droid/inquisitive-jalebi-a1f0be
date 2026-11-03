@@ -11,3 +11,4 @@ supabase/.temp/
 supabase/.branches/
 supabase/functions/.env
 dist-*/
+capacity-result.json

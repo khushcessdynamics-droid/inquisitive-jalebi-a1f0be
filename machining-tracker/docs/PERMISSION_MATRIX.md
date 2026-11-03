@@ -1,6 +1,6 @@
 # User permission matrix
 
-Generated from the database by `scripts/security-docs.mjs` on 2026-11-03 (migrations up to 20261103000800). These are the **default**
+Generated from the database by `scripts/security-docs.mjs` on 2026-11-03 (migrations up to 20261103000900). These are the **default**
 role permissions. An Admin can change a role's permissions or give one person an exception (Users → Permissions), and every change
 is recorded in the activity history.
 

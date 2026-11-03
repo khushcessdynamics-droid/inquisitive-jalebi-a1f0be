@@ -1,6 +1,6 @@
 # Database security configuration
 
-Generated from the database by `scripts/security-docs.mjs` on 2026-11-03 (migrations up to 20261103000800). The live Supabase project gets
+Generated from the database by `scripts/security-docs.mjs` on 2026-11-03 (migrations up to 20261103000900). The live Supabase project gets
 exactly this configuration from the same migrations (`supabase db push`).
 
 ## Summary
@@ -16,7 +16,7 @@ exactly this configuration from the same migrations (`supabase db push`).
 | Privileged (security definer) functions | 103, all with a fixed search path: Yes |
 | Internal `private` schema | Not published by the API (only `public` is). Anonymous visitors: no access. Signed-in users: 46 of 75 helper functions, used only inside row-security checks, views and triggers |
 | File buckets | `job-files`: private, max 50 MB (3 storage policies) |
-| Scheduled jobs | `cess-reminders` (*/15 * * * *, active), `cess-weekly-report` (*/15 * * * *, active) |
+| Scheduled jobs | `cess-reminders` (*/15 * * * *, active), `cess-scheduler-log-cleanup` (17 21 * * *, active), `cess-weekly-report` (*/15 * * * *, active) |
 
 ## How data is protected
 

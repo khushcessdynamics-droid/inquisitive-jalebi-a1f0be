@@ -24,8 +24,8 @@ that prove them in **`docs/SECURITY_TEST_REPORT.md`**. New in this phase:
 
 | Suite | Result |
 |---|---|
-| Unit | 76 / 76 |
-| Integration (real local Supabase, all phases) | 116 / 116 |
+| Unit | 81 / 81 |
+| Integration (real local Supabase, all phases) | 121 / 121 |
 | Browser (Playwright, all phases) | 28 / 28 |
 | Production build served like Cloudflare | 3 / 3 |
 | Type check | clean |
@@ -59,6 +59,31 @@ that prove them in **`docs/SECURITY_TEST_REPORT.md`**. New in this phase:
 | `SECURITY_TEST_REPORT.md` | The 15 security tests, the 11 examples and the Phase 10 list with evidence |
 | `DEPENDENCY_VULNERABILITIES.md` | `npm audit` results and analysis |
 | `ADMIN_SECURITY_GUIDE.md` | Managing people, lost authenticators, regular checks, incidents |
+| `MONITORING.md` | What is watched (System Health "Needs attention", daily live-site check, backups, CI), where logs are kept, what to do |
+| `MAINTENANCE.md` | Routine tasks, changing and publishing the app, rollback, updates |
+| `DOMAIN_AND_HTTPS.md` | Free `.pages.dev` address or a `cess.co.in` subdomain at no cost; HTTPS |
+| `COSTS.md` | ₹0 a month today; measured capacity (about 11 KB per job; file storage is the first limit); when and what to upgrade |
+
+## Final delivery requirements (section 30)
+
+| # | Item | Where | Status |
+|---|---|---|---|
+| 1–3 | Source code, frontend, backend | `machining-tracker/`: `apps/web` (React), database functions in `supabase/migrations`, Edge Function `supabase/functions/admin-users` | Done |
+| 4–5 | PostgreSQL schema and migrations | `supabase/migrations` (11 files); `DATABASE_SECURITY.md` | Done |
+| 6–7 | Multi-user sign-in, role permissions | Supabase Auth with MFA; `SECURITY.md`, `PERMISSION_MATRIX.md` | Done |
+| 8 | Cloud deployment configuration | `DEPLOYMENT.md`, `.github/workflows/`, generated `_headers` | Prepared; **deployment needs your accounts** |
+| 9–17 | Excel import/export, dashboard, job tracking, vendors, commitment history, reliability, cost comparison, returns and quality, payments | Phases 4–8 reports and rule documents | Done |
+| 18 | WhatsApp | Click-to-chat with templates and log (`WHATSAPP_AND_REMINDERS.md`). Automatic sending (WhatsApp Business API) needs a Meta account and your approval: requirements in `SETUP_ACCOUNTS.md` §6 | Click-to-chat done; API mode not built (by agreement) |
+| 19–21 | Reminder engine, activity history, weekly reports | Phases 3, 7, 8 | Done |
+| 22 | Secure document storage | Private bucket, 60-second signed links, file-type rules | Done |
+| 23 | Automated tests | Unit, integration, browser, production-build, capacity; CI on every pull request | Done |
+| 24 | Backup and restore | `tools/backup`, `BACKUP_AND_RECOVERY.md`, `DISASTER_RECOVERY.md` | Done locally; **check on your PC against the live project** |
+| 25 | Monitoring and logging | System Health "Needs attention" and scheduled jobs, daily live-site check, `MONITORING.md` | Done; live check starts after deployment |
+| 26–28 | README, installation, deployment instructions | `README.md`, `BACKUP_AND_RECOVERY.md` (backup PC), `DEPLOYMENT.md` | Done |
+| 29 | Domain and HTTPS | `DOMAIN_AND_HTTPS.md` | Done |
+| 30 | Admin user creation | `DEPLOYMENT.md` §5, `ADMIN_SECURITY_GUIDE.md` | Done |
+| 31 | Maintenance guide | `MAINTENANCE.md` | Done |
+| 32 | Monthly running cost | `COSTS.md` (₹0 today; measured capacity) | Done |
 
 ## Still open (needs the live deployment)
 

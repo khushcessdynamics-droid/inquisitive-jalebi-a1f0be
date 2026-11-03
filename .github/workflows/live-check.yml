@@ -1,0 +1,41 @@
+# Daily outside check of the LIVE app (monitoring): HTTPS, security headers, no secrets in the website, sign-up off, nothing
+# readable without signing in, private files, Edge Function origin rules. Uses only public values and makes no change.
+# A failed run is shown in the Actions tab and GitHub e-mails a notification about failed scheduled runs.
+#
+# Turned on by adding three repository VARIABLES (Settings > Secrets and variables > Actions > Variables), all public values:
+#   APP_SITE_URL               https://cess-machining-tracker.pages.dev
+#   SUPABASE_URL               https://<ref>.supabase.co
+#   SUPABASE_PUBLISHABLE_KEY   sb_publishable_...
+# Until they exist, the job is skipped.
+name: Daily live-site check
+
+on:
+  schedule:
+    - cron: "43 0 * * *" # 06:13 IST every day
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    if: ${{ vars.APP_SITE_URL != '' && vars.SUPABASE_URL != '' && vars.SUPABASE_PUBLISHABLE_KEY != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: machining-tracker
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Check the live website and Supabase project
+        env:
+          SITE: ${{ vars.APP_SITE_URL }}
+          SUPA: ${{ vars.SUPABASE_URL }}
+          KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: node tools/deploy-check/verify.mjs --site "$SITE" --supabase "$SUPA" --key "$KEY" --report live-check.md
+      - name: Results on the run's summary page
+        if: always()
+        run: test -f live-check.md && cat live-check.md >> "$GITHUB_STEP_SUMMARY" || true
