@@ -130,6 +130,7 @@ export interface JobRegisterRow {
   qty_rework: number;
   qty_awaiting_inspection: number;
   qty_with_vendor: number | null;
+  start_date: string;
 }
 
 export interface AssignmentRow {

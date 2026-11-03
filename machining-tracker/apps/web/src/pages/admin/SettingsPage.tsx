@@ -24,7 +24,7 @@ import type { CancelReasonRow, MasterRow, SettingRow } from "../../lib/types";
 import { useRealtimeInvalidate, useSettings } from "../../hooks/data";
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner, Table, cx, td, th } from "../../components/ui";
 
-type Tab = "company" | "localization" | "categories" | "given_by" | "cancel" | "reliability" | "cost" | "jobs" | "reminders" | "whatsapp" | "security";
+type Tab = "company" | "localization" | "categories" | "given_by" | "cancel" | "reliability" | "cost" | "jobs" | "reminders" | "whatsapp" | "weekly" | "security";
 
 export function SettingsPage() {
   const { can } = useAuth();
@@ -39,6 +39,7 @@ export function SettingsPage() {
     { key: "jobs", label: "Job thresholds", show: can("settings.change") },
     { key: "reminders", label: "Reminders", show: can("settings.change") },
     { key: "whatsapp", label: "WhatsApp", show: can("settings.change") },
+    { key: "weekly", label: "Weekly report", show: can("settings.change") },
     { key: "security", label: "Session security", show: can("users.manage") },
   ];
   const visible = tabs.filter((t) => t.show);
@@ -81,6 +82,7 @@ export function SettingsPage() {
           {tab === "jobs" && <JobsForm row={settings.data!.jobs!} />}
           {tab === "reminders" && <RemindersForm row={settings.data!.reminders!} />}
           {tab === "whatsapp" && <WhatsAppSettings row={settings.data!.whatsapp!} />}
+          {tab === "weekly" && <WeeklyReportForm row={settings.data!.weekly_report!} />}
           {tab === "security" && <SecurityForm row={settings.data!.security!} />}
         </>
       )}
@@ -400,6 +402,42 @@ function RemindersForm({ row }: { row: SettingRow }) {
         ) : (
           <p className="mt-1 text-slate-500">No reminders with these settings.</p>
         )}
+      </div>
+      <SaveBar s={s} />
+    </Card>
+  );
+}
+
+const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+function WeeklyReportForm({ row }: { row: SettingRow }) {
+  const s = useSettingDraft<{ enabled: boolean; weekday: number; run_time_ist: string; email_delivery: false }>("weekly_report", row);
+  return (
+    <Card title="Weekly management report">
+      <p className="mb-4 text-sm text-slate-600">
+        The server makes the report automatically on the chosen day at the chosen time (Indian time) for the 7 days before that day, e.g. every Monday for the previous Monday to
+        Sunday. Reports are kept permanently on the Weekly Reports page with PDF and Excel downloads.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-800">
+          <input type="checkbox" checked={s.draft.enabled} onChange={(e) => s.setDraft({ ...s.draft, enabled: e.target.checked })} /> Make the report automatically
+        </label>
+        <Field label="Day" htmlFor="wr-day">
+          <Select id="wr-day" value={s.draft.weekday} onChange={(e) => s.setDraft({ ...s.draft, weekday: Number(e.target.value) })}>
+            {WEEKDAYS.map((d, i) => (
+              <option key={d} value={i + 1}>
+                {d}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Time (IST)" htmlFor="wr-time">
+          <Input id="wr-time" type="time" value={s.draft.run_time_ist} onChange={(e) => s.setDraft({ ...s.draft, run_time_ist: e.target.value })} />
+        </Field>
+        <label className="flex items-start gap-2 text-sm text-slate-500 sm:col-span-3">
+          <input type="checkbox" checked={false} disabled className="mt-1" />
+          <span>Send the report by email or WhatsApp: needs an email provider / the WhatsApp Business API, which are not configured. It stays off until you set them up and switch it on.</span>
+        </label>
       </div>
       <SaveBar s={s} />
     </Card>

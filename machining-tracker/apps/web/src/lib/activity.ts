@@ -51,6 +51,8 @@ export const ACTION_LABELS: Record<string, string> = {
   "whatsapp.initiated": "WhatsApp opened with a message",
   "whatsapp.confirmed_sent": "WhatsApp message marked as sent by user",
   "reminder.generated": "Reminder generated",
+  "report.generated": "Weekly report made",
+  "report.downloaded": "Report downloaded",
   "payment.advance_added": "Advance paid",
   "payment.added": "Payment recorded",
   "payment.charge_added": "Additional charge added",

@@ -7,6 +7,7 @@ import { supabase } from "../lib/supabase";
 import { unwrap } from "../lib/errors";
 import { useDateFormat, useSettings } from "../hooks/data";
 import { Badge, Card, PageHeader } from "../components/ui";
+import { Dashboard, MyJobsSummary } from "./DashboardPage";
 
 interface Health {
   last_verified_backup: { finished_at: string } | null;
@@ -52,61 +53,38 @@ export function HomePage() {
         title={`Welcome${access?.full_name ? `, ${access.full_name}` : ""}`}
         description={`${companyName || "CESS"} · ${formatDate(today, dateFormat)} · Financial year ${financialYear(today).label}`}
       />
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card title="Your account">
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-slate-500">Role</dt>
-              <dd>
-                <Badge tone="blue">{access?.role_label}</Badge>
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">Two-factor authentication</dt>
-              <dd>{access?.aal === "aal2" ? <Badge tone="green">On (verified this session)</Badge> : <Badge tone="amber">Not used this session</Badge>}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">Automatic sign-out after inactivity</dt>
-              <dd>{access?.idle_timeout_minutes} minutes</dd>
-            </div>
-          </dl>
-          {!access?.mfa_required && access?.aal !== "aal2" && (
-            <p className="mt-3 text-sm text-slate-600">
-              Two-factor authentication is optional for your role but recommended.{" "}
-              <Link to="/mfa?setup=1" className="font-medium text-brand-700 hover:underline">
-                Set it up
-              </Link>
-            </p>
+      <p className="-mt-3 mb-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+        <Badge tone="blue">{access?.role_label}</Badge>
+        Two-factor: {access?.aal === "aal2" ? <Badge tone="green">On (verified this session)</Badge> : <Badge tone="amber">Not used this session</Badge>}
+        <span>· automatic sign-out after {access?.idle_timeout_minutes} minutes without activity</span>
+      </p>
+      {isAdmin && !(companyName && (users.data?.length ?? 0) > 1 && health.data?.last_verified_backup) && (
+        <Card title="Setup checklist" className="mb-4">
+          <ul className="divide-y divide-slate-100">
+            <CheckItem done={!!companyName} to="/settings">
+              Enter company information
+            </CheckItem>
+            <CheckItem done={(users.data?.length ?? 0) > 1} to="/admin/users">
+              Invite Managers and Staff
+            </CheckItem>
+            <CheckItem done={!!health.data?.last_verified_backup} to="/system">
+              Run and verify the first backup
+            </CheckItem>
+          </ul>
+          {health.data?.last_verified_backup && (
+            <p className="mt-2 text-xs text-slate-500">Last verified backup: {formatDateTimeIST(health.data.last_verified_backup.finished_at, dateFormat)}</p>
           )}
         </Card>
-
-        {isAdmin && (
-          <Card title="Setup checklist">
-            <ul className="divide-y divide-slate-100">
-              <CheckItem done={!!companyName} to="/settings">
-                Enter company information
-              </CheckItem>
-              <CheckItem done={(users.data?.length ?? 0) > 1} to="/admin/users">
-                Invite Managers and Staff
-              </CheckItem>
-              <CheckItem done={!!health.data?.last_verified_backup} to="/system">
-                Run and verify the first backup
-              </CheckItem>
-            </ul>
-            {health.data?.last_verified_backup && (
-              <p className="mt-2 text-xs text-slate-500">Last verified backup: {formatDateTimeIST(health.data.last_verified_backup.finished_at, dateFormat)}</p>
-            )}
-          </Card>
-        )}
-
-        {!isAdmin && (
-          <Card title="What you can do">
-            <p className="text-sm text-slate-600">
-              Your account is active. The menu shows the modules your role can use; new modules appear there as they are released.
-            </p>
-          </Card>
-        )}
-      </div>
+      )}
+      {!access?.mfa_required && access?.aal !== "aal2" && (
+        <p className="mb-4 text-sm text-slate-600">
+          Two-factor authentication is optional for your role but recommended.{" "}
+          <Link to="/mfa?setup=1" className="font-medium text-brand-700 hover:underline">
+            Set it up
+          </Link>
+        </p>
+      )}
+      {can("reports.view") ? <Dashboard /> : <MyJobsSummary dateFormat={dateFormat} />}
     </>
   );
 }

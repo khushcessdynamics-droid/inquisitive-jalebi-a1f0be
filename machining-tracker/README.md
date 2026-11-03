@@ -4,7 +4,7 @@ Online, multi-user application for outsourced machining jobs and vendor manageme
 Free-first stack: **React + TypeScript + Vite + Tailwind** (static site on Cloudflare) and **Supabase Free**
 (PostgreSQL, Auth with MFA, Storage, Realtime, Edge Functions). Mandatory running cost: **₹0**.
 
-> Status: **Phases 3 to 7 complete and tested locally. Not deployed yet.** See `docs/PHASE3_REPORT.md` to `docs/PHASE7_REPORT.md`.
+> Status: **Phases 3 to 8 complete and tested locally. Not deployed yet.** See `docs/PHASE3_REPORT.md` to `docs/PHASE8_REPORT.md`.
 
 ## What works today
 - Invitation-only accounts, sign-in, sign-out, sign out on all devices
@@ -44,7 +44,11 @@ Free-first stack: **React + TypeScript + Vite + Tailwind** (static site on Cloud
   latest committed date; stops when completed or cancelled. **Notification center** with live unread count
   (`docs/WHATSAPP_AND_REMINDERS.md`)
 
-Dashboard and weekly reports (Phase 8) follow.
+- **Dashboard**: 10 KPIs, 8 charts and 7 tables from live data, each opening the matching records; Staff see their own jobs
+- **Weekly management report**: automatic every Monday (configurable) and on request, sections A-F with previous-week comparison,
+  PDF and Excel downloads, permanent history; **Quality** records page with export (`docs/DASHBOARD_AND_REPORTS.md`)
+
+Deployment (Phase 9) and final acceptance testing (Phase 10) follow.
 
 ## Folder structure
 ```

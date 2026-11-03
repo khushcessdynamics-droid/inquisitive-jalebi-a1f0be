@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Download, Plus, Search } from "lucide-react";
-import { formatDate } from "@cess/shared";
+import { formatDate, formatINR } from "@cess/shared";
 import { useAuth } from "../../auth/AuthProvider";
 import { supabase } from "../../lib/supabase";
 import { toAppError, unwrap } from "../../lib/errors";
@@ -42,7 +42,21 @@ const SORTS: Record<string, string> = {
   amount: "amount",
 };
 
-type Filters = { tab: string; q: string; category: string; vendor: string; fy: string; from: string; to: string };
+type Filters = {
+  tab: string;
+  q: string;
+  category: string;
+  vendor: string;
+  fy: string;
+  from: string;
+  to: string;
+  // set by dashboard links
+  status?: string;
+  sfrom?: string;
+  sto?: string;
+  cfrom?: string;
+  cto?: string;
+};
 
 function clean(q: string): string {
   return q.replace(/[,()"*\\%]/g, " ").trim();
@@ -52,7 +66,12 @@ function buildQuery(f: Filters, select = "*", count = false) {
   let q = supabase.from("job_register").select(select, count ? { count: "exact" } : undefined);
   const tab = TABS.find((t) => t.key === f.tab) ?? TABS[0]!;
   q = tab.archived ? q.not("archived_at", "is", null) : q.is("archived_at", null);
-  if (tab.statuses) q = q.in("status", tab.statuses);
+  if (f.status) q = q.in("status", f.status.split(","));
+  else if (tab.statuses) q = q.in("status", tab.statuses);
+  if (f.sfrom) q = q.gte("start_date", f.sfrom);
+  if (f.sto) q = q.lte("start_date", f.sto);
+  if (f.cfrom) q = q.gte("closed_on", f.cfrom);
+  if (f.cto) q = q.lte("closed_on", f.cto);
   const term = clean(f.q);
   if (term) q = q.or(`job_no.ilike.*${term}*,part_label.ilike.*${term}*,vendor_name.ilike.*${term}*`);
   if (f.category) q = q.eq("category_id", f.category);
@@ -78,7 +97,27 @@ export function JobsRegisterPage() {
     fy: params.get("fy") ?? "",
     from: params.get("from") ?? "",
     to: params.get("to") ?? "",
+    status: params.get("status") ?? "",
+    sfrom: params.get("sfrom") ?? "",
+    sto: params.get("sto") ?? "",
+    cfrom: params.get("cfrom") ?? "",
+    cto: params.get("cto") ?? "",
   };
+  const extra = [
+    f.status && `status: ${f.status.split(",").join(" / ")}`,
+    (f.sfrom || f.sto) && `started ${f.sfrom ? formatDate(f.sfrom, dateFormat) : "…"} to ${f.sto ? formatDate(f.sto, dateFormat) : "…"}`,
+    (f.cfrom || f.cto) && `completed ${f.cfrom ? formatDate(f.cfrom, dateFormat) : "…"} to ${f.cto ? formatDate(f.cto, dateFormat) : "…"}`,
+  ].filter(Boolean) as string[];
+  const balances = useQuery({
+    queryKey: ["register-balances"],
+    enabled: can("payments.view"),
+    queryFn: async () => {
+      const rows = unwrap(await supabase.from("payment_accounts").select("job_id,balance").limit(20000)) as Array<{ job_id: string; balance: number | null }>;
+      const m = new Map<string, number>();
+      for (const r of rows) if (r.balance !== null) m.set(r.job_id, (m.get(r.job_id) ?? 0) + Number(r.balance));
+      return m;
+    },
+  });
   const page = Number(params.get("page") ?? "0");
   const sort = params.get("sort") ?? "created";
   const dir = params.get("dir") ?? "desc";
@@ -156,6 +195,7 @@ export function JobsRegisterPage() {
           { header: "Qty Accepted", value: (r) => r.qty_accepted, format: "int" },
           { header: "Qty Rejected", value: (r) => r.qty_rejected, format: "int" },
           { header: "Qty With Vendor", value: (r) => r.qty_with_vendor, format: "int" },
+          ...(can("payments.view") ? [{ header: "Balance Amount", value: (r: JobRegisterRow) => balances.data?.get(r.id) ?? null, format: "inr" as const }] : []),
           { header: "Actual Return Date", value: (r) => r.return_date, format: "date" },
           { header: "Quantity Sent", value: (r) => r.qty_sent, format: "int" },
           { header: "Job Amount (₹)", value: (r) => r.amount, format: "inr" },
@@ -288,6 +328,14 @@ export function JobsRegisterPage() {
           <Alert tone="error">{exportError}</Alert>
         </div>
       )}
+      {extra.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-brand-100 bg-brand-50 px-3 py-2 text-sm text-brand-800">
+          <span>Filtered from the dashboard: {extra.join(" · ")}</span>
+          <button type="button" className="font-medium underline" onClick={() => update({ status: "", sfrom: "", sto: "", cfrom: "", cto: "" })}>
+            Clear
+          </button>
+        </div>
+      )}
       <div className="mt-4">
         {list.isLoading ? (
           <Spinner />
@@ -295,7 +343,7 @@ export function JobsRegisterPage() {
           <Alert tone="error">{toAppError(list.error).message}</Alert>
         ) : !list.data?.rows.length ? (
           <EmptyState title="No jobs match">
-            {f.q || f.category || f.vendor || f.fy || f.from || f.to ? "Try clearing the search or filters." : can("jobs.create") ? "Create the first job with New job." : null}
+            {f.q || f.category || f.vendor || f.fy || f.from || f.to || extra.length ? "Try clearing the search or filters." : can("jobs.create") ? "Create the first job with New job." : null}
           </EmptyState>
         ) : (
           <>
@@ -309,7 +357,7 @@ export function JobsRegisterPage() {
                   <th className={th}>{sortHeader("given", "Given")}</th>
                   <th className={th}>{sortHeader("commitment", "Commitment")}</th>
                   <th className={th}>Returned</th>
-                  <th className={th}>Qty</th>
+                  <th className={th}>Qty sent / back</th>
                   <th className={th}>{sortHeader("amount", "Amount")}</th>
                 </tr>
               </thead>
@@ -360,9 +408,16 @@ export function JobsRegisterPage() {
                     <td className={td}>
                       <DateText value={r.return_date} format={dateFormat} />
                     </td>
-                    <td className={`${td} tabular-nums`}>{r.qty_sent ?? <span className="text-slate-400">—</span>}</td>
+                    <td className={`${td} whitespace-nowrap tabular-nums`}>
+                      {r.assignment_qty ?? r.qty_sent ?? <span className="text-slate-400">—</span>}
+                      <span className="text-slate-400"> / </span>
+                      {r.qty_received}
+                    </td>
                     <td className={td}>
                       <Money value={r.amount} />
+                      {balances.data?.has(r.id) && (balances.data.get(r.id) ?? 0) > 0 && (
+                        <p className="whitespace-nowrap text-xs text-red-700">balance {formatINR(balances.data.get(r.id)!)}</p>
+                      )}
                     </td>
                   </tr>
                 ))}

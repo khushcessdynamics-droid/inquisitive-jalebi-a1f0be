@@ -118,6 +118,7 @@ function History() {
               <option value="payments">Payments</option>
               <option value="communication">WhatsApp</option>
               <option value="reminders">Reminders</option>
+              <option value="reports">Reports</option>
               <option value="attachments">Attachments</option>
               <option value="import">Excel import</option>
             </Select>

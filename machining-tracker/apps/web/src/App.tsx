@@ -31,6 +31,8 @@ const PriceHistoryPage = lazy(() => import("./pages/quotes/PriceHistoryPage").th
 const PaymentsPage = lazy(() => import("./pages/payments/PaymentsPage").then((m) => ({ default: m.PaymentsPage })));
 const NotificationsPage = lazy(() => import("./pages/notifications/NotificationsPage").then((m) => ({ default: m.NotificationsPage })));
 const WhatsAppPage = lazy(() => import("./pages/whatsapp/WhatsAppPage").then((m) => ({ default: m.WhatsAppPage })));
+const ReportsPage = lazy(() => import("./pages/reports/ReportsPage").then((m) => ({ default: m.ReportsPage })));
+const QualityPage = lazy(() => import("./pages/quality/QualityPage").then((m) => ({ default: m.QualityPage })));
 const ImportExportPage = lazy(() => import("./pages/data/ImportExportPage").then((m) => ({ default: m.ImportExportPage })));
 
 function RequireSession({ children }: { children: ReactNode }) {
@@ -135,6 +137,8 @@ export function App() {
         <Route path="quotes" element={<RequirePermission anyOf={["costcompare.view"]}><QuotesPage /></RequirePermission>} />
         <Route path="quotes/history" element={<RequirePermission anyOf={["costcompare.view"]}><PriceHistoryPage /></RequirePermission>} />
         <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="reports" element={<RequirePermission anyOf={["reports.view"]}><ReportsPage /></RequirePermission>} />
+        <Route path="quality" element={<RequirePermission anyOf={["quality.manage", "returns.record", "reports.view"]}><QualityPage /></RequirePermission>} />
         <Route path="whatsapp" element={<RequirePermission anyOf={["whatsapp.send"]}><WhatsAppPage /></RequirePermission>} />
         <Route path="payments" element={<RequirePermission anyOf={["payments.view"]}><PaymentsPage /></RequirePermission>} />
         <Route path="quotes/:id" element={<RequirePermission anyOf={["costcompare.view"]}><QuoteDetailPage /></RequirePermission>} />

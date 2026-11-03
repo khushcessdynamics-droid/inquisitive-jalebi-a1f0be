@@ -1,6 +1,6 @@
 import { useState, type ComponentType } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Activity, Bell, ClipboardList, Cog, Factory, FileSpreadsheet, Gauge, IndianRupee, MessageCircle, HeartPulse, Home, ListChecks, LogOut, Menu, PlusCircle, Scale, ShieldCheck, UserCircle, Users, X } from "lucide-react";
+import { Activity, Bell, ClipboardCheck, ClipboardList, Cog, Factory, FileBarChart, FileSpreadsheet, Gauge, IndianRupee, MessageCircle, HeartPulse, Home, ListChecks, LogOut, Menu, PlusCircle, Scale, ShieldCheck, UserCircle, Users, X } from "lucide-react";
 import type { PermissionKey } from "@cess/shared";
 import { useAuth } from "../auth/AuthProvider";
 import { useUnreadCount } from "../hooks/notifications";
@@ -13,9 +13,9 @@ interface NavItem {
   anyOf?: PermissionKey[];
 }
 
-// Only modules that are fully working are listed. Later phases add WhatsApp, reminders and the dashboard.
+// Only modules that are fully working are listed.
 const NAV: NavItem[] = [
-  { to: "/", label: "Home", icon: Home },
+  { to: "/", label: "Dashboard", icon: Home },
   { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/jobs", label: "Jobs Register", icon: ClipboardList, anyOf: ["jobs.view_all", "jobs.view_assigned"] },
   { to: "/jobs/new", label: "New Job", icon: PlusCircle, anyOf: ["jobs.create"] },
@@ -24,6 +24,8 @@ const NAV: NavItem[] = [
   { to: "/quotes", label: "Cost Comparison", icon: Scale, anyOf: ["costcompare.view"] },
   { to: "/payments", label: "Payments", icon: IndianRupee, anyOf: ["payments.view"] },
   { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle, anyOf: ["whatsapp.send"] },
+  { to: "/quality", label: "Quality", icon: ClipboardCheck, anyOf: ["quality.manage", "returns.record", "reports.view"] },
+  { to: "/reports", label: "Weekly Reports", icon: FileBarChart, anyOf: ["reports.view"] },
   { to: "/jobs/review", label: "Missing Data", icon: ListChecks, anyOf: ["jobs.view_all", "jobs.view_assigned"] },
   { to: "/data", label: "Excel Import / Export", icon: FileSpreadsheet, anyOf: ["data.import", "reports.export"] },
   { to: "/admin/users", label: "Users", icon: Users, anyOf: ["users.manage"] },
