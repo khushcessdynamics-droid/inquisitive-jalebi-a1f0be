@@ -5,7 +5,8 @@
 //
 // Usage:
 //   node tools/deploy-check/verify.mjs --site https://<your-site> --supabase https://<ref>.supabase.co --key <publishable key> [--report file.md]
-// Add --allow-http only for testing against a local copy.
+// Add --allow-http only for testing against a local copy. --check-login-limit also tests that repeated failed sign-ins
+// are blocked (it blocks sign-ins from the address running the check for about 5 minutes: never run it from the office).
 import { writeFileSync } from "node:fs";
 
 const args = Object.fromEntries(
@@ -162,6 +163,24 @@ async function supabase() {
   else if (ours.status === 401) warn("User-admin function accepts this website", "the gateway asked for a signed-in user first; check it by inviting a user in the app");
   else fail("User-admin function accepts this website", `${ours.status}, allow-origin: ${oursOrigin ?? "none"}`);
   (ours.status === 401 || ours.status === 403 ? pass : fail)("User-admin function refuses visitors who are not signed in", `${ours.status} ${oursText.slice(0, 70)}`);
+
+  // Security acceptance test 4. Opt-in, because it blocks sign-ins FROM THE ADDRESS RUNNING THIS CHECK for about 5 minutes:
+  // never run it from the office network. Uses an address that has no account.
+  if (args["check-login-limit"] === "true") {
+    const email = `deploy-check-${Date.now()}@example.invalid`;
+    const codes = [];
+    for (let i = 0; i < 60; i++) {
+      const r = await get(`${supa}/auth/v1/token?grant_type=password`, {
+        method: "POST",
+        headers: { apikey: key, "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password: `wrong-${i}-${Math.random()}` }),
+      });
+      codes.push(r.status);
+      if (r.status === 429) break;
+    }
+    const at = codes.indexOf(429);
+    (at >= 0 ? pass : fail)("Repeated failed sign-ins are blocked", at >= 0 ? `blocked after ${at} failed attempts` : `${codes.length} attempts, none blocked`);
+  }
 }
 
 try {

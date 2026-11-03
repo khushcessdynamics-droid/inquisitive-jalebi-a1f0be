@@ -42,6 +42,21 @@ export const INVARIANTS: Record<string, string> = {
   activity_log_max_id: "select coalesce(max(id), 0)::text from public.activity_log",
   settings_keys: "select string_agg(key, ',' order by key collate \"C\") from public.app_settings",
   verified_mfa_factors: "select count(*)::text from auth.mfa_factors where status::text = 'verified'",
+  // business records (plain tables only: the test restore has no views or functions). A backup made before a table
+  // existed records null for its check, and that check is then skipped.
+  vendors: "select count(*) || '/' || count(*) filter (where is_active) from public.vendors",
+  jobs: "select count(*) || '/' || count(*) filter (where closed_at is not null) || '/' || coalesce(max(job_no), '') from public.jobs",
+  assignments_by_state: "select coalesce(string_agg(state || '=' || n, ',' order by state collate \"C\"), '') from (select state, count(*) as n from public.job_assignments group by state) s",
+  assignment_amounts: "select coalesce(sum(amount), 0)::text || '/' || count(*) filter (where amount is null) from public.job_assignments",
+  commitment_revisions: "select count(*) || '/' || coalesce(max(new_date)::text, '') from public.commitment_revisions",
+  returns: "select count(*) || '/' || coalesce(sum(qty_received) filter (where voided_at is null), 0) from public.material_returns",
+  inspections: "select coalesce(sum(qty_accepted), 0) || '/' || coalesce(sum(qty_rejected), 0) || '/' || coalesce(sum(qty_rework), 0) from public.quality_inspections where voided_at is null",
+  payments: "select count(*) || '/' || coalesce(sum(amount), 0)::text || '/' || coalesce(max(payment_no), '') from public.vendor_payments",
+  payment_adjustments: "select count(*) || '/' || coalesce(sum(amount), 0)::text from public.payment_adjustments",
+  quotations: "select count(*) || '/' || coalesce(sum(price), 0)::text from public.vendor_quotations",
+  whatsapp_messages: "select count(*)::text from public.whatsapp_messages",
+  weekly_reports: "select count(*) || '/' || coalesce(max(period_start)::text, '') from public.weekly_reports",
+  attachments: "select count(*) || '/' || coalesce(sum(size_bytes), 0) from public.attachments",
 };
 
 export async function describeTables(db: Db): Promise<{ tables: Omit<TableMeta, "rows" | "sha256" | "bytes">[]; enums: EnumMeta[] }> {

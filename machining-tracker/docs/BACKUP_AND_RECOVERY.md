@@ -23,8 +23,10 @@ backup can be opened, and with it anyone holding a backup file could read it.
    - the row counts are compared;
    - primary keys, unique keys and every relationship are rebuilt, so duplicates or orphan records fail the check;
    - every table is exported again and must be **byte-identical** to the backup;
-   - business checks taken at backup time are compared (number of active Admins, every account has a profile, size of the activity
-     history, settings present, MFA factors);
+   - business checks taken at backup time are compared: active Admins, every account has a profile, size of the activity history,
+     settings, MFA factors, and the business records (vendors; jobs and the last job number; vendor assignments by state and their
+     amounts; commitment revisions; returned, accepted, rejected and rework quantities; payments with their total and last number;
+     adjustments; quotations; WhatsApp log; weekly reports; attachments);
    - every attachment is compared with its checksum.
 4. Only then is the backup marked **VERIFIED**. The result is shown on the app's **System Health** page (Admin) and written to
    `CESS-Machining-Data\logs`.
@@ -75,7 +77,7 @@ Double-click `backup-restore.cmd`, choose the backup, and type the confirmation 
 7. signs everyone out (same passwords and authenticator apps keep working).
 
 ### B. Disaster recovery (Supabase project lost or deleted)
-1. Create a new Supabase project and apply the migrations (`docs/SETUP_ACCOUNTS.md`, step 3), using the **same app version** as the
+1. Create a new Supabase project and apply the migrations (`docs/DEPLOYMENT.md`, steps 1–3), using the **same app version** as the
    backup (the backup records its structure version and the restore refuses a mismatch).
 2. Put the new project's details into `backup.json` (keep the same `backup.key`).
 3. Run `backup-restore.cmd` and pick the newest verified backup (from the PC or the USB copy, after copying it into the backups folder).
@@ -83,7 +85,11 @@ Double-click `backup-restore.cmd`, choose the backup, and type the confirmation 
 5. Everyone signs in with their existing password and authenticator app.
 
 This full procedure is tested automatically: the local database is wiped completely, then everything is restored and an Admin signs in
-with the original password and MFA code (`tests/integration/backup.test.ts`).
+with the original password and MFA code (`tests/integration/backup.test.ts`). The same is tested with a complete set of business
+records (jobs with a reassignment, revised dates, returns, inspections, invoice, payments with a reversal, quotations, WhatsApp log,
+reminders, weekly report, a drawing): after the restore every screen's data is identical, payments and history still cannot be
+altered, and job and payment numbers continue without duplicates (`tests/integration/phase10-restore.test.ts`).
+The full emergency plan, including lost keys, lost PC and leaked secrets: `docs/DISASTER_RECOVERY.md`.
 
 ## Recovery targets (free setup)
 | | Target | Notes |

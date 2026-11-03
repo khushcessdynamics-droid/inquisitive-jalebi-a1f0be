@@ -213,3 +213,24 @@ Then I sign in through the public address and run the main journeys. Only then i
   migrations already applied are skipped.
 - **Checks on every pull request**: GitHub Actions runs type checks, unit tests, the production build, and the database,
   browser and production-build tests on a throw-away local Supabase (`.github/workflows/ci.yml`). It uses no secret.
+
+## Production checklist
+
+Tick every line before telling the team the app is live.
+
+- [ ] Supabase project on the **Free** plan, **no payment card**, region Mumbai; two-step sign-in on the Supabase account
+- [ ] Migrations applied (`supabase migration list` shows every migration on the live project); Cron jobs `cess-reminders` and
+      `cess-weekly-report` active
+- [ ] Edge Function `admin-users` deployed with `--no-verify-jwt`; `APP_SITE_URL` and `APP_ALLOWED_ORIGINS` set to the website address
+- [ ] Authentication: sign-up **off**, password rules (12+, upper/lower/digits), TOTP on, Site URL and the single redirect URL set,
+      both email templates replaced
+- [ ] Cloudflare Pages: production branch `main`, root `machining-tracker`, only the two (or three) public `VITE_` variables,
+      preview branches **None**; two-step sign-in on the Cloudflare account
+- [ ] Optional Turnstile: site key in Cloudflare and redeployed **before** CAPTCHA is switched on in Supabase
+- [ ] First Admin created and signed in with MFA; a **second Admin** invited
+- [ ] `verify.mjs` against the public address: **0 failed** (report saved as `docs/DEPLOYMENT_CHECK.md`)
+- [ ] `verify.mjs --check-login-limit` run once from a network other than the office: repeated failed sign-ins are blocked
+- [ ] Signed in on a phone and on an office PC; opened a job, uploaded and downloaded a drawing
+- [ ] Backup tool pointed at the live project: `backup-now.cmd` ends with **VERIFIED**; daily schedule set; USB second copy written;
+      second copy of `backup.key` stored safely
+- [ ] GitHub repository made private (recommended); two-step sign-in on the GitHub account

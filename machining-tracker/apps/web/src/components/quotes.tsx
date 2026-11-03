@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ChangedMeanwhileNotice, changedSince, useOpenSnapshot } from "../hooks/editSnapshot";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { formatDate, formatINR, todayIST } from "@cess/shared";
@@ -33,7 +34,9 @@ function useRefreshQuotes(id?: string) {
 }
 
 // ------------------------------------------------------------------ request (requirement) dialog
-export function RequestDialog({ request, open, onClose }: { request?: QuotationRequestRow; open: boolean; onClose: () => void }) {
+export function RequestDialog({ request: current, open, onClose }: { request?: QuotationRequestRow; open: boolean; onClose: () => void }) {
+  const request = useOpenSnapshot(open, current);
+  const changedMeanwhile = open && changedSince(request, current);
   const categories = useCategories();
   const navigate = useNavigate();
   const refresh = useRefreshQuotes(request?.id);
@@ -134,13 +137,16 @@ export function RequestDialog({ request, open, onClose }: { request?: QuotationR
       <Field label="Remarks" htmlFor="qr-remarks">
         <Textarea id="qr-remarks" rows={2} maxLength={2000} value={form.remarks} onChange={set("remarks")} />
       </Field>
+      <ChangedMeanwhileNotice show={changedMeanwhile} what="this requirement" />
       {error && <Alert tone="error">{error}</Alert>}
     </Modal>
   );
 }
 
 // ------------------------------------------------------------------ quotation dialog
-export function QuoteDialog({ cmp, quote, open, onClose }: { cmp: QuotationComparison; quote?: ComparedQuote; open: boolean; onClose: () => void }) {
+export function QuoteDialog({ cmp, quote: current, open, onClose }: { cmp: QuotationComparison; quote?: ComparedQuote; open: boolean; onClose: () => void }) {
+  const quote = useOpenSnapshot(open, current);
+  const changedMeanwhile = open && changedSince(quote, current);
   const r = cmp.request;
   const refresh = useRefreshQuotes(r.id);
   const [form, setForm] = useState({ vendor_id: "", quote_date: todayIST(), basis: "per_part" as "per_part" | "total", price: "", delivery_days: "", quote_ref: "", remarks: "" });
@@ -270,6 +276,7 @@ export function QuoteDialog({ cmp, quote, open, onClose }: { cmp: QuotationCompa
         </div>
       </div>
       {form.vendor_id && problem && <Alert tone="warning">{problem}</Alert>}
+      <ChangedMeanwhileNotice show={changedMeanwhile} what="this quotation" />
       {error && <Alert tone="error">{error}</Alert>}
     </Modal>
   );

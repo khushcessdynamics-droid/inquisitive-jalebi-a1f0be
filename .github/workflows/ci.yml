@@ -36,6 +36,8 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run typecheck
       - run: npm run test:unit
+      - name: No high or critical vulnerabilities in the app's dependencies (moderate ones are reviewed in docs/DEPENDENCY_VULNERABILITIES.md)
+        run: npm audit --omit=dev --audit-level=high
       - name: Production build (placeholder project address; no real key)
         env:
           VITE_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co

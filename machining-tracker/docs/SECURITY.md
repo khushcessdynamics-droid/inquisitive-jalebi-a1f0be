@@ -1,4 +1,9 @@
-# Security design (Phase 3 foundation)
+# Security design
+
+Related documents: permission matrix `PERMISSION_MATRIX.md` · database security configuration `DATABASE_SECURITY.md` · cloud security
+configuration `CLOUD_SECURITY.md` · security testing report `SECURITY_TEST_REPORT.md` · dependency vulnerabilities
+`DEPENDENCY_VULNERABILITIES.md` · backup and restore `BACKUP_AND_RECOVERY.md` · disaster recovery `DISASTER_RECOVERY.md` · admin guide
+`ADMIN_SECURITY_GUIDE.md` · deployment and production checklist `DEPLOYMENT.md`.
 
 ## Architecture
 
@@ -82,7 +87,9 @@ Job visibility for Staff uses the separate **Assigned Staff User** field (kept a
   `has_permission('users.manage')` with that token, so forged, expired or public-key tokens get 401/403 (integration test).
 - The deployment checker (`tools/deploy-check/verify.mjs`) scans every JavaScript file of the live site for secret keys,
   `service_role` tokens and database connection strings, and confirms that nothing can be read without signing in.
-- Links and passwords are never logged. Error messages to users are generic; details stay server-side.
+- Links and passwords are never logged. Error messages to users never contain internal database details: the app's own rule
+  messages are shown, anything else becomes a plain message with an error code (`apps/web/src/lib/errors.ts`, tested). A page that
+  fails to display shows a plain recovery screen instead of a blank page or technical details.
 
 ## Browser security
 - Strict Content-Security-Policy (`script-src 'self'`, `connect-src` limited to the Supabase project, `frame-ancestors 'none'`), HSTS, nosniff, Referrer-Policy, Permissions-Policy (generated `_headers`).

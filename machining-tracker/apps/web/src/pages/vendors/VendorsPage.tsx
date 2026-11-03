@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ChangedMeanwhileNotice, changedSince, useOpenSnapshot } from "../../hooks/editSnapshot";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Download, Plus } from "lucide-react";
@@ -37,7 +38,9 @@ function problem(f: VendorForm): string | null {
   return null;
 }
 
-export function VendorDialog({ vendor, open, onClose, onSaved }: { vendor: VendorRow | null; open: boolean; onClose: () => void; onSaved?: (id: string) => void }) {
+export function VendorDialog({ vendor: current, open, onClose, onSaved }: { vendor: VendorRow | null; open: boolean; onClose: () => void; onSaved?: (id: string) => void }) {
+  const vendor = useOpenSnapshot(open, current);
+  const changedMeanwhile = open && changedSince(vendor, current);
   const categories = useCategories();
   const qc = useQueryClient();
   const [f, setF] = useState<VendorForm>(blank);
@@ -172,6 +175,7 @@ export function VendorDialog({ vendor, open, onClose, onSaved }: { vendor: Vendo
         </label>
       </div>
       {p && f.name && <Alert tone="warning">{p}</Alert>}
+      <ChangedMeanwhileNotice show={changedMeanwhile} what="this vendor" />
       {error && <Alert tone="error">{error}</Alert>}
     </Modal>
   );

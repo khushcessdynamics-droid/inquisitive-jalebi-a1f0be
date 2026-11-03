@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ChangedMeanwhileNotice, changedSince, useOpenSnapshot } from "../hooks/editSnapshot";
 import { useQueryClient } from "@tanstack/react-query";
 import { todayIST } from "@cess/shared";
 import { supabase } from "../lib/supabase";
@@ -292,7 +293,9 @@ export function CancelForwardDialog({ job, assignment, vendorName, open, onClose
   );
 }
 
-export function EditJobDialog({ job, mode, open, onClose }: { job: JobRegisterRow; mode: "all" | "operational"; open: boolean; onClose: () => void }) {
+export function EditJobDialog({ job: current, mode, open, onClose }: { job: JobRegisterRow; mode: "all" | "operational"; open: boolean; onClose: () => void }) {
+  const job = useOpenSnapshot(open, current);
+  const changedMeanwhile = open && changedSince(job, current);
   const categories = useCategories();
   const givenBy = useGivenBy();
   const users = useAssignableUsers(open && mode === "all");
@@ -424,12 +427,15 @@ export function EditJobDialog({ job, mode, open, onClose }: { job: JobRegisterRo
           </Field>
         </div>
       </div>
+      <ChangedMeanwhileNotice show={changedMeanwhile} what="this job" />
       {error && <Alert tone="error">{error}</Alert>}
     </Modal>
   );
 }
 
-export function EditAssignmentDialog({ job, assignment, mode, open, onClose }: { job: JobRegisterRow; assignment: AssignmentRow; mode: "all" | "operational"; open: boolean; onClose: () => void }) {
+export function EditAssignmentDialog({ job, assignment: current, mode, open, onClose }: { job: JobRegisterRow; assignment: AssignmentRow; mode: "all" | "operational"; open: boolean; onClose: () => void }) {
+  const assignment = useOpenSnapshot(open, current);
+  const changedMeanwhile = open && changedSince(assignment, current);
   const { can } = useAuth();
   const [form, setForm] = useState({ vendor_id: "", dispatched_on: "", commitment_date: "", amount: "", qty_sent: "", remarks: "" });
   const [reason, setReason] = useState("");
@@ -529,6 +535,7 @@ export function EditAssignmentDialog({ job, assignment, mode, open, onClose }: {
           </div>
         )}
       </div>
+      <ChangedMeanwhileNotice show={changedMeanwhile} what="this vendor assignment" />
       {error && <Alert tone="error">{error}</Alert>}
     </Modal>
   );

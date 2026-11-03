@@ -122,4 +122,11 @@ Supabase Free has no backups, so `tools/backup` makes them on your PC: encrypted
 safe retention rules, optionally copied to a USB drive. Setup and restore steps: `docs/BACKUP_AND_RECOVERY.md`.
 
 ## Security
-See `docs/SECURITY.md`. Never put the secret/service key or database password in the website, Cloudflare or Git.
+See `docs/SECURITY.md` and the documents it links: permission matrix, database and cloud security configuration, security testing
+report, dependency vulnerabilities, disaster recovery plan and the Admin security guide. Final acceptance results: `docs/PHASE10_REPORT.md`.
+Never put the secret/service key or database password in the website, Cloudflare or Git.
+
+To regenerate the permission matrix and database security documents from the database (after `npm run db:reset`):
+```bash
+node scripts/security-docs.mjs
+```
