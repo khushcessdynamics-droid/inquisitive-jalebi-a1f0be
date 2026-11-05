@@ -82,6 +82,19 @@ export async function access(client: SupabaseClient): Promise<Record<string, unk
   return data as Record<string, unknown>;
 }
 
+/**
+ * Pauses the real database scheduler (reminders, weekly report) for a test file that runs those functions itself with fixed
+ * times: otherwise a 15-minute tick during the file creates the same reminders or report first. The next database reset
+ * schedules the jobs again.
+ */
+export async function pauseScheduler(): Promise<void> {
+  await sql("select cron.alter_job(jobid, active := false) from cron.job where jobname in ('cess-reminders', 'cess-weekly-report')");
+}
+
+export async function resumeScheduler(): Promise<void> {
+  await sql("select cron.alter_job(jobid, active := true) from cron.job where jobname in ('cess-reminders', 'cess-weekly-report')");
+}
+
 /** Recreates the LOCAL database from the migrations (deletes all local data) and waits until the API answers again. */
 export async function resetLocalDatabase(): Promise<void> {
   const { execSync } = await import("node:child_process");

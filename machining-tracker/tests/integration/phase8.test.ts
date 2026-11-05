@@ -2,7 +2,7 @@
 // user may see), the weekly management report for a fixed past week, scheduling, history and comparison.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { closeSql, createAuthUser, enrollAndVerifyMfa, resetLocalDatabase, signIn, sql, uniqueEmail } from "../helpers/clients";
+import { closeSql, createAuthUser, enrollAndVerifyMfa, resetLocalDatabase, signIn, sql, uniqueEmail, pauseScheduler } from "../helpers/clients";
 
 let admin: SupabaseClient;
 let manager: SupabaseClient;
@@ -54,6 +54,7 @@ async function returnAll(asg: string, on: string, accepted: number, rejected = 0
 
 beforeAll(async () => {
   await resetLocalDatabase();
+  await pauseScheduler(); // this file runs the scheduled functions itself at fixed times
   const adminEmail = uniqueEmail("p8.admin");
   await createAuthUser(adminEmail, "P8 Admin");
   await sql("select private.bootstrap_first_admin($1)", [adminEmail]);

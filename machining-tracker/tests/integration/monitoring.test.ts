@@ -37,9 +37,13 @@ describe("System Health monitoring", () => {
   });
 
   it("shows the reminder engine's last run and the latest weekly report", async () => {
+    // the real database scheduler runs every 15 minutes during the tests, so "before" is compared with what the database holds
+    // at that moment instead of assuming nothing has run yet
     const before = (await admin.rpc("system_health")).data as Json;
-    expect(before.reminder_engine).toMatchObject({ enabled: true, run_time_ist: "09:00", last_run_date: null });
-    expect(before.last_weekly_report).toBeNull();
+    const lastRun = (await sql<{ d: string }>("select run_date::text as d from public.reminder_runs order by run_date desc limit 1"))[0]?.d ?? null;
+    const lastReport = (await sql<{ s: string }>("select period_start::text as s from public.weekly_reports order by generated_at desc limit 1"))[0]?.s ?? null;
+    expect(before.reminder_engine).toMatchObject({ enabled: true, run_time_ist: "09:00", last_run_date: lastRun });
+    expect(before.last_weekly_report?.period_start ?? null).toBe(lastReport);
     await sql("select private.run_reminders(now(), true)");
     const d = new Date(Date.now() + 330 * 60_000);
     d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7) - 7);

@@ -2,7 +2,7 @@
 // engine (schedule, no duplicates, recalculation, stop when completed / cancelled, recipients), notifications.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { closeSql, createAuthUser, enrollAndVerifyMfa, resetLocalDatabase, signIn, sql, uniqueEmail } from "../helpers/clients";
+import { closeSql, createAuthUser, enrollAndVerifyMfa, resetLocalDatabase, signIn, sql, uniqueEmail, pauseScheduler, resumeScheduler } from "../helpers/clients";
 
 let admin: SupabaseClient;
 let manager: SupabaseClient;
@@ -51,6 +51,7 @@ async function remindersOn(day: number) {
 
 beforeAll(async () => {
   await resetLocalDatabase();
+  await pauseScheduler(); // this file runs the scheduled functions itself at fixed times
   const adminEmail = uniqueEmail("p7.admin");
   await createAuthUser(adminEmail, "P7 Admin");
   await sql("select private.bootstrap_first_admin($1)", [adminEmail]);
@@ -212,6 +213,7 @@ describe("reminder engine", () => {
   });
 
   it("is scheduled in the database; only Admin can run it on demand; history cannot be changed", async () => {
+    await resumeScheduler(); // paused for this file in beforeAll; the status reports the switched-on job
     const st = (await ok(admin.rpc("reminder_engine_status"))) as Json;
     expect(st).toMatchObject({ scheduled: true, schedule: "*/15 * * * *" });
     expect((await manager.rpc("run_reminders_now")).error?.code).toBe("42501");
