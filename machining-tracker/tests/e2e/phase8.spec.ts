@@ -108,12 +108,20 @@ test("weekly report: make it for last week, view A-F with comparison, download P
     await expect(page.getByRole("heading", { name: t })).toBeVisible();
   }
   await expect(page.getByRole("heading", { name: /^C\. Vendor performance/ })).toBeVisible();
-  const quality = page.locator("section").filter({ has: page.getByRole("heading", { name: "E. Quality summary" }) });
-  await expect(quality.getByRole("row", { name: /Accepted quantity/ })).toContainText("55");
-  await expect(quality.getByRole("row", { name: /Rejected quantity/ })).toContainText("5");
-  await expect(quality.getByRole("row", { name: /Quality acceptance %/ })).toContainText("91.7%");
-  const jobs = page.locator("section").filter({ has: page.getByRole("heading", { name: "A. Job summary" }) });
-  await expect(jobs.getByRole("row", { name: /Completed jobs/ })).toContainText("1");
+  // other test files share this database and their dates move with the calendar, so the expected figures are read from the
+  // report the app stored, and this file's own records are checked to be part of them
+  const stored = (await sql<{ data: { jobs: { completed: number }; quality: { accepted: number; rejected: number; acceptance_pct: number | null } } }>(
+    "select data from public.weekly_reports where period_start = $1 order by generated_at desc limit 1", [lastMonday()],
+  ))[0]!.data;
+  expect(stored.jobs.completed).toBeGreaterThanOrEqual(1); // E2E-8003 completed in that week
+  expect(stored.quality.accepted).toBeGreaterThanOrEqual(55); // its inspection: 55 accepted, 5 rejected
+  expect(stored.quality.rejected).toBeGreaterThanOrEqual(5);
+  const thisWeek = (section: string, row: RegExp) =>
+    page.locator("section").filter({ has: page.getByRole("heading", { name: section }) }).getByRole("row", { name: row }).getByRole("cell").nth(1);
+  await expect(thisWeek("E. Quality summary", /Accepted quantity/)).toHaveText(String(stored.quality.accepted));
+  await expect(thisWeek("E. Quality summary", /Rejected quantity/)).toHaveText(String(stored.quality.rejected));
+  await expect(thisWeek("E. Quality summary", /Quality acceptance %/)).toHaveText(`${Number(stored.quality.acceptance_pct).toFixed(1)}%`);
+  await expect(thisWeek("A. Job summary", /Completed jobs/)).toHaveText(String(stored.jobs.completed));
   const pdf = page.waitForEvent("download");
   await page.getByRole("button", { name: "PDF" }).click();
   expect((await pdf).suggestedFilename()).toBe(`CESS-Weekly-Report-${lastMonday()}.pdf`);
