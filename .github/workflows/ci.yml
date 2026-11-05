@@ -1,0 +1,89 @@
+# Automatic checks on every pull request and on main: type check, unit tests and a production build; then the full
+# database, browser and production-build tests against a throw-away local Supabase stack inside the GitHub runner.
+# Uses no secret and touches no live service. Free on public repositories; on a private repository it uses the free
+# GitHub Actions minutes (about 15 minutes per run).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: machining-tracker
+
+jobs:
+  checks:
+    name: Type check, unit tests, production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: machining-tracker/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run test:unit
+      - name: No high or critical vulnerabilities in the app's dependencies (moderate ones are reviewed in docs/DEPENDENCY_VULNERABILITIES.md)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Production build (placeholder project address; no real key)
+        env:
+          VITE_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_placeholder
+        run: npm run build
+      - name: Security headers are generated and no secret is in the build
+        run: |
+          grep -q "frame-ancestors 'none'" apps/web/dist/_headers
+          grep -q "connect-src 'self' https://abcdefghijklmnopqrst.supabase.co" apps/web/dist/_headers
+          test ! -e apps/web/dist/_redirects
+          # real key / password formats only (the Supabase library itself contains the text "sb_secret_");
+          # service_role tokens are decoded and checked by tools/deploy-check/verify.mjs in the next job
+          ! grep -rlE "sb_secret_[A-Za-z0-9_-]{10,}|postgres(ql)?://[^\"'[:space:]]*:[^\"'[:space:]]*@" apps/web/dist
+
+  database-and-browser:
+    name: Database, browser and production-build tests (local Supabase)
+    runs-on: ubuntu-latest
+    needs: checks
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: machining-tracker/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Start local Supabase
+        run: npx supabase start -x studio,imgproxy,vector,logflare,supavisor,postgres-meta
+      - name: Point the web app at the local stack (local development keys, not secrets)
+        run: |
+          eval "$(npx supabase status -o env | grep -E '^(API_URL|PUBLISHABLE_KEY)=')"
+          printf 'VITE_SUPABASE_URL=%s\nVITE_SUPABASE_PUBLISHABLE_KEY=%s\n' "$API_URL" "$PUBLISHABLE_KEY" > apps/web/.env.local
+      - run: npm run test:integration
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: npm run test:prod
+      - name: Deployment checker against the local copy
+        run: |
+          eval "$(npx supabase status -o env | grep -E '^(API_URL|PUBLISHABLE_KEY)=')"
+          (node scripts/serve-dist.mjs apps/web/dist 4173 &) && sleep 1
+          node tools/deploy-check/verify.mjs --site http://127.0.0.1:4173 --supabase "$API_URL" --key "$PUBLISHABLE_KEY" --allow-http
+      - name: Keep test traces of failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: machining-tracker/test-results
+          retention-days: 7
