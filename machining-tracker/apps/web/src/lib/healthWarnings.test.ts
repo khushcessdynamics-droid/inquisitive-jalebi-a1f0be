@@ -44,6 +44,10 @@ describe("System Health warnings", () => {
       { level: "warning", text: "Weekly management report (checked every 15 minutes): 2 failed run(s) in the last 7 days." },
     ]);
     expect(healthWarnings(jobs(job("cess-reminders", { last_start: "2026-11-03T04:30:00Z" })))[0]!.text).toMatch(/has not run for more than an hour/);
+    // freshly set up: no run yet is a mild note, not an alarm
+    expect(healthWarnings(jobs(job("cess-reminders", { last_start: null, last_status: null, runs_7d: 0 })))).toEqual([
+      { level: "warning", text: "Reminders (checked every 15 minutes) has not run yet. It runs every 15 minutes; check again shortly." },
+    ]);
     // the daily clean-up is not expected every 15 minutes
     expect(healthWarnings(jobs(job("cess-scheduler-log-cleanup", { schedule: "17 21 * * *", last_start: "2026-11-02T21:17:00Z" })))).toEqual([]);
   });

@@ -20,6 +20,7 @@ on free plans.
 | No verified backup, last verified backup older than 2 days, or the newest backup attempt failed | Critical |
 | Database or file storage at 80 % of the plan (critical at 95 %; at 100 % new uploads fail) | Warning / Critical |
 | Database scheduler unavailable, a job switched off, its last run failed, or a 15-minute job silent for over an hour | Critical |
+| A 15-minute job that has not run yet (normal for up to 15 minutes after setting up) | Warning |
 | Failed runs in the last 7 days | Warning |
 | Today's reminders not run 30 minutes after the configured time | Warning |
 

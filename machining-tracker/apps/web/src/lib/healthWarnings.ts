@@ -73,7 +73,10 @@ export function healthWarnings(h: HealthFacts, limits = { db: FREE_DB_BYTES, sto
     else if (j.failures_7d > 0) out.push({ level: "warning", text: `${label}: ${j.failures_7d} failed run(s) in the last 7 days.` });
     const everyQuarter = j.schedule.startsWith("*/15");
     const last = j.last_start ? new Date(j.last_start).getTime() : null;
-    if (j.active && everyQuarter && (last === null || now - last > HOUR)) {
+    if (j.active && everyQuarter && last === null) {
+      // just set up: the first run comes within 15 minutes
+      out.push({ level: "warning", text: `${label} has not run yet. It runs every 15 minutes; check again shortly.` });
+    } else if (j.active && everyQuarter && last !== null && now - last > HOUR) {
       out.push({ level: "critical", text: `${label} has not run for more than an hour.` });
     }
   }
